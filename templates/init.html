@@ -7,7 +7,36 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <style>
     body { background: var(--papier); }
-    .page { justify-content: flex-start; padding-top: 90px; padding-bottom: 60px; }
+    .page {
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+    /* Carte centrale */
+    .init-carte {
+      width: 100%;
+      max-width: 520px;
+      background: white;
+      border: 1px solid rgba(0,0,0,.08);
+      box-shadow: 6px 6px 0 rgba(0,0,0,.06);
+      padding: 48px 44px 40px;
+    }
+    .init-titre {
+      font-family: var(--font-titre);
+      font-size: clamp(24px, 4vw, 36px);
+      color: var(--foret);
+      margin-bottom: 4px;
+      text-align: center;
+    }
+    .init-sous {
+      font-family: var(--font-titre);
+      font-style: italic;
+      font-size: 14px;
+      color: var(--terre);
+      text-align: center;
+      margin-bottom: 36px;
+    }
   </style>
 </head>
 <body>
@@ -17,75 +46,68 @@
 
   <div class="page">
 
-    <div class="a1" style="text-align:center">
-      <span class="label-petit">Étape 1 / 1</span>
-      <h1 style="font-family:var(--font-titre);font-size:clamp(28px,5vw,44px);color:var(--foret);margin-top:8px">
-        Configurer l'écosystème
-      </h1>
-      <p style="font-family:var(--font-titre);font-style:italic;font-size:15px;color:var(--terre);margin-top:6px">
-        Définissez les populations initiales de chaque espèce
-      </p>
+    <div class="init-carte a1">
+
+      <h1 class="init-titre">Configurer l'écosystème</h1>
+      <p class="init-sous">Définissez les populations initiales de chaque espèce</p>
+
+      <form action="/game" method="POST">
+
+        <div class="bloc-sliders">
+
+          <div class="ligne-slider loup-bloc">
+            <div class="slider-entete">
+              <span class="slider-nom">🐺 Loups</span>
+              <span class="slider-valeur" id="qloup">10</span>
+            </div>
+            <p class="slider-description">Prédateurs au sommet de la chaîne — ils régulent les cerfs.</p>
+            <input type="range" id="loup" name="loup" min="0" max="50" value="10" step="1" class="customrangerouge">
+          </div>
+
+          <div class="ligne-slider cerf-bloc">
+            <div class="slider-entete">
+              <span class="slider-nom">🦌 Cerfs</span>
+              <span class="slider-valeur" id="qcerf">80</span>
+            </div>
+            <p class="slider-description">Proies herbivores — ils se nourrissent d'herbe et sont chassés par les loups.</p>
+            <input type="range" id="cerf" name="cerf" min="0" max="500" value="80" step="1" class="customrangebleu">
+          </div>
+
+          <div class="ligne-slider herbe-bloc">
+            <div class="slider-entete">
+              <span class="slider-nom">🌿 Herbe</span>
+              <span class="slider-valeur" id="qherbe">200</span>
+            </div>
+            <p class="slider-description">Base de la chaîne alimentaire — elle se régénère naturellement.</p>
+            <input type="range" id="herbe" name="herbe" min="0" max="1000" value="200" step="1" class="customrangevert">
+          </div>
+
+        </div>
+
+        <input type="hidden" name="annee" value="0">
+
+        <div style="display:flex;justify-content:center;margin-top:36px">
+          <button type="submit" class="btn btn-principal" style="font-size:14px;padding:14px 56px">
+            Démarrer →
+          </button>
+        </div>
+
+      </form>
+
     </div>
-
-    <form action="/game" method="POST" style="width:100%">
-
-      <div class="bloc-sliders a2">
-
-        <!-- Loups -->
-        <div class="ligne-slider loup-bloc">
-          <div class="slider-entete">
-            <span class="slider-nom">🐺 Loups</span>
-            <span class="slider-valeur" id="qloup">90</span>
-          </div>
-          <p class="slider-description">Prédateurs au sommet de la chaîne — ils régulent les cerfs.</p>
-          <input type="range" id="loup" name="loup" min="0" max="50" value="90" step="1" class="customrangerouge">
-        </div>
-
-        <!-- Cerfs -->
-        <div class="ligne-slider cerf-bloc">
-          <div class="slider-entete">
-            <span class="slider-nom">🦌 Cerfs</span>
-            <span class="slider-valeur" id="qcerf">90</span>
-          </div>
-          <p class="slider-description">Proies herbivores — ils se nourrissent d'herbe et sont chassés par les loups.</p>
-          <input type="range" id="cerf" name="cerf" min="0" max="500" value="90" step="1" class="customrangebleu">
-        </div>
-
-        <!-- Herbe -->
-        <div class="ligne-slider herbe-bloc">
-          <div class="slider-entete">
-            <span class="slider-nom">🌿 Herbe</span>
-            <span class="slider-valeur" id="qherbe">90</span>
-          </div>
-          <p class="slider-description">Base de la chaîne alimentaire — elle se régénère naturellement.</p>
-          <input type="range" id="herbe" name="herbe" min="0" max="1000" value="90" step="1" class="customrangevert">
-        </div>
-
-      </div>
-
-      <input type="hidden" name="jour" value="0">
-
-      <div class="a3" style="display:flex;justify-content:center;margin-top:32px">
-        <button type="submit" class="btn btn-principal" style="font-size:14px;padding:14px 48px">
-          Démarrer →
-        </button>
-      </div>
-
-    </form>
 
   </div>
 
   <script src="{{ url_for('static', filename='app.js') }}"></script>
   <script>
-    // Mise à jour visuelle du fond du slider
-    function majFond(input, min, max) {
-      const pct = ((input.value - min) / (max - min)) * 100;
+    function majFond(input) {
+      const pct = ((input.value - input.min) / (input.max - input.min)) * 100;
       input.style.setProperty('--pct', pct + '%');
     }
     ['loup','cerf','herbe'].forEach(id => {
       const el = document.getElementById(id);
-      majFond(el, el.min, el.max);
-      el.addEventListener('input', () => majFond(el, el.min, el.max));
+      majFond(el);
+      el.addEventListener('input', () => majFond(el));
     });
   </script>
 

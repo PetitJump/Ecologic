@@ -1,0 +1,11 @@
+{
+  "premier_pas": true,
+  "equilibre": true,
+  "meute_royale": false,
+  "troupeau": false,
+  "foret_dense": false,
+  "survie_seche": true,
+  "survie_hiver": false,
+  "cycle": true,
+  "extinction": false
+}

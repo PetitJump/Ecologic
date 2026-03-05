@@ -1,6 +1,37 @@
 {
-    "tempete" : {
-        "chance" : 0.12,
-        "degats" : "?"
+    "secheresse": {
+        "chance": 0.025,
+        "nom": "Sécheresse",
+        "emoji": "☀️",
+        "description": "La chaleur brûle les prairies. L'herbe se raréfie.",
+        "effet": { "herbe": -0.80, "cerf": -0.20, "loup": -0.05 }
+    },
+    "pluies": {
+        "chance": 0.025,
+        "nom": "Pluies abondantes",
+        "emoji": "🌧️",
+        "description": "Les pluies fertilisent les prairies. L'herbe explose.",
+        "effet": { "herbe": 1.00, "cerf": 0.10, "loup": 0 }
+    },
+    "hiver": {
+        "chance": 0.020,
+        "nom": "Hiver rigoureux",
+        "emoji": "❄️",
+        "description": "Le froid décime les troupeaux et affaiblit les prédateurs.",
+        "effet": { "herbe": -0.45, "cerf": -0.40, "loup": -0.35 }
+    },
+    "printemps": {
+        "chance": 0.020,
+        "nom": "Printemps précoce",
+        "emoji": "🌸",
+        "description": "Le renouveau stimule toutes les espèces.",
+        "effet": { "herbe": 0.60, "cerf": 0.25, "loup": 0.15 }
+    },
+    "incendie": {
+        "chance": 0.010,
+        "nom": "Incendie",
+        "emoji": "🔥",
+        "description": "Les flammes ravagent la forêt. Catastrophe végétale.",
+        "effet": { "herbe": -0.95, "cerf": -0.50, "loup": -0.20 }
     }
 }
