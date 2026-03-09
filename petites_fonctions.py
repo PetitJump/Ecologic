@@ -1,3 +1,6 @@
+#Projet : Naturalia
+#Auteurs : Margot, Hugo, Carl, Killian
+
 from random import randint
 
 def random_repro(data: dict) -> dict:

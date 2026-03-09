@@ -1,3 +1,6 @@
+#Projet : Naturalia
+#Auteurs : Margot, Hugo, Carl, Killian
+
 import random
 import json
 

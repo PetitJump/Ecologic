@@ -1,3 +1,6 @@
+#Projet : Naturalia
+#Auteurs : Margot, Hugo, Carl, Killian
+
 from flask import Flask, render_template, request, session
 import json, os
 from algo import Predateur, Vegetal, Proie, Meute, Jeu

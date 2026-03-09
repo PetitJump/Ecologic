@@ -24,8 +24,8 @@
                 1
             ],
             "nombre_de_nv_nee": [
-                10,
-                10
+                1,
+                2
             ],
             "maturiter_sexuel": 2
         },
@@ -37,8 +37,8 @@
     },
     "herbe": {
         "reproduction": {
-            "taux_r": 0.25,
-            "capacite": 3500,
+            "taux_r": 0.6,
+            "capacite": 5000,
             "tout_les": [
                 1,
                 1
