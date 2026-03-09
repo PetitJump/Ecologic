@@ -1,11 +1,11 @@
 {
-  "premier_pas": true,
-  "equilibre": true,
+  "premier_pas": false,
+  "equilibre": false,
   "meute_royale": false,
   "troupeau": false,
   "foret_dense": false,
-  "survie_seche": true,
+  "survie_seche": false,
   "survie_hiver": false,
   "cycle": false,
-  "extinction": true
+  "extinction": false
 }
