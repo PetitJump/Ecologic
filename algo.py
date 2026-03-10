@@ -23,9 +23,9 @@ class Vegetal:
         self.nom = nom
 
 class Jeu:
-    def __init__(self, meute: Meute, proies: list, vegetaux: list):
-        self.meute   = meute
-        self.proies  = proies
+    def __init__(self, meute: Meute, proies: list[Proie], vegetaux: list[Vegetal]):
+        self.meute = meute
+        self.proies = proies
         self.vegetaux = vegetaux
 
     def naissance(self, data: dict, annee: int):
@@ -37,64 +37,65 @@ class Jeu:
         import random as _rnd
         from random import randint
 
-        # Loups
+        #Loups
         freq_loup = randint(data["loup"]["reproduction"]["tout_les"][0],
                             data["loup"]["reproduction"]["tout_les"][1])
-        if annee % freq_loup == 0:
-            age_min = data["loup"]["reproduction"]["maturiter_sexuel"]
-            majeurs = [k for k in self.meute.predateurs if k.age > age_min]
+        if annee % freq_loup == 0: #Si c'est le moment de ce reproduire
+            age_min = data["loup"]["reproduction"]["maturiter_sexuel"] #L'age minimum pour pouvoir ce reproduire
+            majeurs = [k for k in self.meute.predateurs if k.age > age_min] #On ne prend que les loups majeurs
             nb_couples = len(majeurs) // 2
             for _ in range(nb_couples):
                 petits = randint(data["loup"]["reproduction"]["nombre_de_nv_nee"][0],
                                  data["loup"]["reproduction"]["nombre_de_nv_nee"][1])
                 for _ in range(petits):
-                    if _rnd.random() < 0.35:  # 35% survie juvénile loups
+                    if _rnd.random() < 0.35:  #Valeur entre 0.0 et 1.0 (On utilise cela pour le taux de survie)
                         self.meute.predateurs.append(Predateur("loup", 0))
 
         for k in self.meute.predateurs:
-            k.age += 1
+            k.age += 1 #On augmente l'age de chaque loups
 
-        # Cerfs - repro limitée par la disponibilité de l'herbe
+        #Cerfs
         freq_cerf = randint(data["cerf"]["reproduction"]["tout_les"][0],
                             data["cerf"]["reproduction"]["tout_les"][1])
-        if annee % freq_cerf == 0:
+        if annee % freq_cerf == 0: #Si c'est le moment de ce reproduire
             age_min = data["cerf"]["reproduction"]["maturiter_sexuel"]
             majeurs = [k for k in self.proies if k.age > age_min]
             nb_couples = len(majeurs) // 2
-            # Si l'herbe est rare, les cerfs se reproduisent moins bien
-            nb_cerfs = max(1, len(self.proies))
+            nb_cerfs = max(1, len(self.proies)) #On utlise max() pour eviter les bugs
+
+            #Plus l'herbe est rare par rapport au nombre de cerfs, moins les cerfs se reproduisent.
             herbe_par_cerf = len(self.vegetaux) / nb_cerfs
-            # Seuil de confort: 5 touffes/cerf = repro pleine. Moins = repro réduite
-            facteur_herbe = min(1.0, herbe_par_cerf / 5.0)
+            facteur_herbe = min(1.0, herbe_par_cerf / 5.0) #On utilise min() pour éviter d'avoir un taux de reproduction trop haut
+
             for _ in range(nb_couples):
                 if _rnd.random() > facteur_herbe:
-                    continue  # pas de repro si herbe insuffisante
+                    continue #Pas de reproduction si herbe insuffisante
                 petits = randint(data["cerf"]["reproduction"]["nombre_de_nv_nee"][0],
                                  data["cerf"]["reproduction"]["nombre_de_nv_nee"][1])
                 for _ in range(petits):
-                    if _rnd.random() < 0.40:
+                    if _rnd.random() < 0.40: #Valeur entre 0.0 et 1.0 (On utilise cela pour le taux de survie)
                         self.proies.append(Proie("cerf", 0))
 
         for k in self.proies:
-            k.age += 1
+            k.age += 1 #On augmente l'age de chaque cerfs
 
-        # Herbe - croissance logistique
-        N = len(self.vegetaux)
-        r = data["herbe"]["reproduction"]["taux_r"]
-        K = data["herbe"]["reproduction"]["capacite"]
-        croissance = int(r * N * (1 - N / K))
-        croissance = max(0, croissance)
+        #Herbe
+        N = len(self.vegetaux) #Nombre d'herbes
+        r = data["herbe"]["reproduction"]["taux_r"] #Taux de croissance
+        K = data["herbe"]["reproduction"]["capacite"] #Capacité maximal
+        croissance = int(r * N * (1 - N / K)) #Equation de Verhulst
+        croissance = max(0, croissance) #max() pour eviter les bugs
         for _ in range(croissance):
             self.vegetaux.append(Vegetal("herbe"))
 
 
     def mort(self, data: dict, annee: int):
         """Morts naturelles et prédation."""
-        self.meute.predateurs = [k for k in self.meute.predateurs if k.age < 20]
-        self.proies           = [k for k in self.proies           if k.age < 12]  # cerfs vivent moins longtemps
-        self.taux_de_survie()
+        self.meute.predateurs = [k for k in self.meute.predateurs if k.age < 15] #Les loups de 15 ans meurts
+        self.proies = [k for k in self.proies if k.age < 12] #Les cerfs de 12 ans meurts
+        self.taux_de_survie() #Les morts naturelle
 
-        # ── Loups chassent les cerfs ──────────────────────
+        #Loups
         if annee % data["loup"]["mange"]["tout_les"] == 0:
             combien = data["loup"]["mange"]["combien"]
             necessaires = len(self.meute.predateurs) * combien
@@ -109,10 +110,10 @@ class Jeu:
                 else:
                     self.meute.predateurs = self.meute.predateurs[:survivants]
 
-        # ── Cerfs broutent l'herbe ────────────────────────
-        # Chaque cerf mange X touffes par an.
-        # Si l'herbe manque, la pression de faim est progressive :
-        # les cerfs meurent proportionnellement au manque, pas tous d'un coup.
+        #Cerfs
+        """Chaque cerf mange X touffes par an.
+        Si l'herbe manque, la pression de faim est progressive :
+        Les cerfs meurent proportionnellement au manque, pas tous d'un coup."""
         touffes_dispo    = len(self.vegetaux)
         touffes_par_cerf = data["cerf"]["mange"]["combien"]
         nb_cerfs         = len(self.proies)
