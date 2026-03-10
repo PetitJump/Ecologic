@@ -97,42 +97,38 @@ class Jeu:
 
         #Loups
         if annee % data["loup"]["mange"]["tout_les"] == 0:
-            combien = data["loup"]["mange"]["combien"]
-            necessaires = len(self.meute.predateurs) * combien
-            if len(self.proies) >= necessaires:
+            combien = data["loup"]["mange"]["combien"] #Combien de cerfs mange un loup
+            necessaires = len(self.meute.predateurs) * combien #Nombre de cerfs necessaires
+            if len(self.proies) >= necessaires: #Si il y a assez de cerfs pour les loups
                 for _ in range(necessaires):
-                    self.proies.pop()
+                    self.proies.pop() #On tue les cerfs les plus jeunes
             else:
-                survivants = len(self.proies) // combien
+                survivants: int = len(self.proies) // combien
                 self.proies = []
                 if survivants <= 0:
-                    self.meute.predateurs = []
+                    self.meute.predateurs = [] #On tue tout les loups
                 else:
-                    self.meute.predateurs = self.meute.predateurs[:survivants]
+                    self.meute.predateurs = self.meute.predateurs[:survivants] #On ne garde que les survivants (les plus jeunes meurt)
 
         #Cerfs
         """Chaque cerf mange X touffes par an.
         Si l'herbe manque, la pression de faim est progressive :
         Les cerfs meurent proportionnellement au manque, pas tous d'un coup."""
-        touffes_dispo    = len(self.vegetaux)
+        touffes_dispo = len(self.vegetaux)
         touffes_par_cerf = data["cerf"]["mange"]["combien"]
-        nb_cerfs         = len(self.proies)
+        nb_cerfs = len(self.proies)
         touffes_requises = nb_cerfs * touffes_par_cerf
 
-        if touffes_dispo >= touffes_requises:
-            # Assez d'herbe pour tout le monde
-            self.vegetaux = self.vegetaux[touffes_requises:]
-        elif touffes_dispo > 0:
-            # Manque d'herbe : taux de survie proportionnel à la disponibilité
-            taux_satisfaction = touffes_dispo / touffes_requises
-            # Les cerfs meurent partiellement — mortalité douce par famine
+        if touffes_dispo >= touffes_requises: #S'il y a assez de touffes pour tout le monde
+            self.vegetaux = self.vegetaux[touffes_requises:] #On enlève les touffes manger
+        elif touffes_dispo > 0: #Manque d'herbe : taux de survie proportionnel à la disponibilité
+            taux_satisfaction = touffes_dispo / touffes_requises #Les cerfs meurent partiellement mortalité douce par famine
             import random as _r
-            self.proies = [c for c in self.proies if _r.random() < (0.3 + 0.7 * taux_satisfaction)]
-            self.vegetaux = []
-        else:
-            # Plus d'herbe du tout — forte mortalité mais pas extinction immédiate
+            self.proies = [c for c in self.proies if _r.random() < (0.3 + 0.7 * taux_satisfaction)] #???
+            self.vegetaux = [] #On enlève l'herbe
+        else: #Plus d'herbe du tout
             import random as _r
-            self.proies = [c for c in self.proies if _r.random() < 0.2]
+            self.proies = [c for c in self.proies if _r.random() < 0.2] #???
             self.vegetaux = []
 
     def taux_de_survie(self):
@@ -140,11 +136,11 @@ class Jeu:
         self.meute.predateurs = [
             k for k in self.meute.predateurs
             if random.random() < (0.5 if k.age == 0 else 0.95)
-        ]
+        ] #Gère le taux de mort en fonction de l'age du loup
         self.proies = [
             k for k in self.proies
             if random.random() < (0.5 if k.age == 0 else 0.95)
-        ]
+        ] #Gère le taux de mort en fonction de l'age du cerf
 
     def appliquer_meteo(self, evenement: dict) -> dict:
         """
@@ -155,17 +151,17 @@ class Jeu:
         """
         effet = evenement["effet"]
 
-        # ── Herbe ──────────────────────────────────────────
+        #Herbes
         nb_herbe = len(self.vegetaux)
         delta_herbe = int(nb_herbe * effet["herbe"])
-        if delta_herbe > 0:
+        if delta_herbe > 0: #Si c'est positif
             for _ in range(delta_herbe):
-                self.vegetaux.append(Vegetal("herbe"))
+                self.vegetaux.append(Vegetal("herbe")) #On ajoute le bonus d'herbe
         elif delta_herbe < 0:
             retirer = min(abs(delta_herbe), nb_herbe)
             self.vegetaux = self.vegetaux[retirer:]
 
-        # ── Cerfs ──────────────────────────────────────────
+        #Cerfs
         nb_cerf = len(self.proies)
         delta_cerf = int(nb_cerf * effet["cerf"])
         if delta_cerf > 0:
@@ -175,7 +171,7 @@ class Jeu:
             retirer = min(abs(delta_cerf), nb_cerf)
             self.proies = self.proies[retirer:]
 
-        # ── Loups ──────────────────────────────────────────
+        #Loups
         nb_loup = len(self.meute.predateurs)
         delta_loup = int(nb_loup * effet["loup"])
         if delta_loup > 0:
