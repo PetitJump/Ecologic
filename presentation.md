@@ -1,4 +1,4 @@
-# Naturalia — Présentation du projet
+# Ecologic — Présentation du projet
 
 ---
 

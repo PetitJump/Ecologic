@@ -1,14 +1,15 @@
-#Projet : Naturalia
+#Projet : Ecologic
 #Auteurs : Margot, Hugo, Carl, Killian
 
 from flask import Flask, render_template, request, session
-import json, os
+import json
+import os, os
 from Naturalia.sources.algo import Predateur, Vegetal, Proie, Meute, Jeu
 
 app = Flask(__name__)
 app.secret_key = "naturalia_nsi_2025"
 
-SUCCES_FILE = "succes_permanents.json"
+SUCCES_FILE = os.path.join("data", "succes_permanents.json")
 
 SUCCES_DEF = [
     {"id": "premier_pas",  "emoji": "🌱", "nom": "Premier pas",
@@ -297,9 +298,8 @@ def reset_succes():
 
 @app.route("/parametre")
 def regles():
-    import json as _json
-    with open("data.json", "r", encoding="utf-8") as f:
-        data = _json.load(f)
+    with open(os.path.join("data", "data.json"), "r", encoding="utf-8") as f:
+        data = json.load(f)
     # S'assurer que tout_les est toujours une liste [min, max]
     for espece in data:
         tl = data[espece]["reproduction"]["tout_les"]
@@ -356,7 +356,7 @@ def modifier():
             "reproduction": herbe_repro
         }
     }
-    with open("data.json", "w", encoding="utf-8") as f:
+    with open(os.path.join("data", "data.json"), "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
     return render_template("index.html",
         succes_list=SUCCES_DEF,

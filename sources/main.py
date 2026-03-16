@@ -1,4 +1,4 @@
-#Projet : Naturalia
+#Projet : Ecologic
 #Auteurs : Margot, Hugo, Carl, Killian
 
 """

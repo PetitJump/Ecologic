@@ -1,6 +1,8 @@
-#Projet : Naturalia
+#Projet : Ecologic
 #Auteurs : Margot, Hugo, Carl, Killian
 
+import os
+import os
 import random
 import json
 
@@ -123,11 +125,9 @@ class Jeu:
             self.vegetaux = self.vegetaux[touffes_requises:] #On enlève les touffes manger
         elif touffes_dispo > 0: #Manque d'herbe : taux de survie proportionnel à la disponibilité
             taux_satisfaction = touffes_dispo / touffes_requises #Les cerfs meurent partiellement mortalité douce par famine
-            import random as _r
             self.proies = [c for c in self.proies if _r.random() < (0.3 + 0.7 * taux_satisfaction)] #???
             self.vegetaux = [] #On enlève l'herbe
         else: #Plus d'herbe du tout
-            import random as _r
             self.proies = [c for c in self.proies if _r.random() < 0.2] #???
             self.vegetaux = []
 
@@ -186,9 +186,9 @@ class Jeu:
     def update(self, annee: int):
         """Fonction principale appelée par Flask. Retourne aussi l'évent météo éventuel."""
 
-        with open('data.json', 'r', encoding='utf-8') as f:
+        with open(os.path.join('data', 'data.json'), 'r', encoding='utf-8') as f:
             data = json.load(f)
-        # random_repro supprime - les parametres sont appliques directement dans naissance()
+
 
         self.naissance(data, annee)
         self.mort(data, annee)
@@ -200,7 +200,7 @@ class Jeu:
 
         # ── Météo ─────────────────────────────────────────
         meteo_event = None
-        with open('meteo.json', 'r', encoding='utf-8') as f:
+        with open(os.path.join('data', 'meteo.json'), 'r', encoding='utf-8') as f:
             meteo = json.load(f)
 
         for cle, ev in meteo.items():
