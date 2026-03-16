@@ -3,7 +3,7 @@
 
 from flask import Flask, render_template, request, session
 import json, os
-from algo import Predateur, Vegetal, Proie, Meute, Jeu
+from Naturalia.sources.algo import Predateur, Vegetal, Proie, Meute, Jeu
 
 app = Flask(__name__)
 app.secret_key = "naturalia_nsi_2025"
