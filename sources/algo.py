@@ -145,7 +145,7 @@ class Jeu:
             if random.random() < (0.5 if k.age == 0 else 0.95)
         ] #Gère le taux de mort en fonction de l'age du cerf
 
-    def appliquer_meteo(self, evenement: dict) -> dict:
+     def appliquer_meteo(self, evenement: dict) -> dict:
         """
         Applique un événement météo sur les populations.
         evenement = un dict du meteo.json (avec clé 'effet').
@@ -156,33 +156,33 @@ class Jeu:
 
         #Herbes
         nb_herbe = len(self.vegetaux)
-        delta_herbe = int(nb_herbe * effet["herbe"])
+        delta_herbe = int(nb_herbe * effet["herbe"])#on applique le taux assigner a l'herbe
         if delta_herbe > 0: #Si c'est positif
             for _ in range(delta_herbe):
                 self.vegetaux.append(Vegetal("herbe")) #On ajoute le bonus d'herbe
-        elif delta_herbe < 0:
-            retirer = min(abs(delta_herbe), nb_herbe)
-            self.vegetaux = self.vegetaux[retirer:]
+        elif delta_herbe < 0:#Si il est négatif
+            retirer = min(abs(delta_herbe), nb_herbe)#on prend la valeur la plus spetite entre delta_herbe le nombre de herbe
+            self.vegetaux = self.vegetaux[retirer:]#on prend la fin de la liste apres lindice selectionner
 
         #Cerfs
         nb_cerf = len(self.proies)
-        delta_cerf = int(nb_cerf * effet["cerf"])
-        if delta_cerf > 0:
+        delta_cerf = int(nb_cerf * effet["cerf"])#on applique le taux assigner au cerf
+        if delta_cerf > 0:#Si c'est positif
             for _ in range(delta_cerf):
-                self.proies.append(Proie("cerf", 1))
-        elif delta_cerf < 0:
-            retirer = min(abs(delta_cerf), nb_cerf)
-            self.proies = self.proies[retirer:]
+                self.proies.append(Proie("cerf", 1))#on ajoute une année au cerf
+        elif delta_cerf < 0:#Si il est négatif
+            retirer = min(abs(delta_cerf), nb_cerf)#on prend la valeur la plus spetite entre delta_cerfet le nombre de cerf
+            self.proies = self.proies[retirer:]#on prend la fin de la liste apres lindice selectionner
 
         #Loups
         nb_loup = len(self.meute.predateurs)
-        delta_loup = int(nb_loup * effet["loup"])
-        if delta_loup > 0:
+        delta_loup = int(nb_loup * effet["loup"])#on applique le taux assigner au loup
+        if delta_loup > 0:#Si c'est positif
             for _ in range(delta_loup):
-                self.meute.predateurs.append(Predateur("loup", 1))
-        elif delta_loup < 0:
-            retirer = min(abs(delta_loup), nb_loup)
-            self.meute.predateurs = self.meute.predateurs[retirer:]
+                self.meute.predateurs.append(Predateur("loup", 1))#on ajoute une année au loup
+        elif delta_loup < 0:#Si il est négatif
+            retirer = min(abs(delta_loup), nb_loup)#on prend la valeur la plus spetite entre delta_loup et le nombre de loup
+            self.meute.predateurs = self.meute.predateurs[retirer:]#on prend la fin de la liste apres lindice selectionner
 
         return evenement
 
