@@ -145,7 +145,7 @@ class Jeu:
             if random.random() < (0.5 if k.age == 0 else 0.95)
         ] #Gère le taux de mort en fonction de l'age du cerf
 
-     def appliquer_meteo(self, evenement: dict) -> dict:
+    def appliquer_meteo(self, evenement: dict) -> dict:
         """
         Applique un événement météo sur les populations.
         evenement = un dict du meteo.json (avec clé 'effet').
@@ -191,7 +191,7 @@ class Jeu:
         La fonction update permet de mettre à jour le jeu.
         """
         #On appelle le fichier data avec les information sur les animaux.
-        with open('data.json', 'r', encoding='utf-8') as f:
+        with open(os.path.join(BASE_DIR, 'data', 'data.json'), 'r', encoding='utf-8') as f:
             data = json.load(f)
         
         #On appelle les fonctions mort et naissance. 
@@ -208,8 +208,8 @@ class Jeu:
 
         #On va maintenant appliquer les météos
         meteo_event = None
-        with open('meteo.json', 'r', encoding='utf-8') as f:
-            meteo = json.load(f) #On va ouvrir le fichier Json pour pouvoir le lire
+        with open(os.path.join(BASE_DIR, 'data', 'meteo.json'), 'r', encoding='utf-8') as f:
+            meteo = json.load(f)
 
         for cle, ev in meteo.items(): #On va instancier deux variables qui sont dans meteo
             if random.random() < ev["chance"]: #On va prendre un decimal random. si celui-ci est plus petit que la probilité de la météo
