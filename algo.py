@@ -185,7 +185,6 @@ class Jeu:
 
     def update(self, annee: int):
         """Fonction principale appelée par Flask. Retourne aussi l'évent météo éventuel."""
-        from petites_fonctions import random_repro
 
         with open('data.json', 'r', encoding='utf-8') as f:
             data = json.load(f)
