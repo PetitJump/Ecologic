@@ -41,6 +41,9 @@ class Jeu:
         from random import randint
 
         #Loups
+        for k in self.meute.predateurs:
+            k.age += 1 #On augmente l'age de chaque loups avant la reproduction
+
         freq_loup = randint(data["loup"]["reproduction"]["tout_les"][0],
                             data["loup"]["reproduction"]["tout_les"][1])
         if annee % freq_loup == 0: #Si c'est le moment de ce reproduire
@@ -54,10 +57,10 @@ class Jeu:
                     if _rnd.random() < 0.35:  #Valeur entre 0.0 et 1.0 (On utilise cela pour le taux de survie)
                         self.meute.predateurs.append(Predateur("loup", 0))
 
-        for k in self.meute.predateurs:
-            k.age += 1 #On augmente l'age de chaque loups
-
         #Cerfs
+        for k in self.proies:
+            k.age += 1 #On augmente l'age de chaque cerfs avant la reproduction
+
         freq_cerf = randint(data["cerf"]["reproduction"]["tout_les"][0],
                             data["cerf"]["reproduction"]["tout_les"][1])
         if annee % freq_cerf == 0: #Si c'est le moment de ce reproduire
@@ -78,9 +81,6 @@ class Jeu:
                 for _ in range(petits):
                     if _rnd.random() < 0.40: #Valeur entre 0.0 et 1.0 (On utilise cela pour le taux de survie)
                         self.proies.append(Proie("cerf", 0))
-
-        for k in self.proies:
-            k.age += 1 #On augmente l'age de chaque cerfs
 
         #Herbe
         N = len(self.vegetaux) #Nombre d'herbes

@@ -59,11 +59,31 @@
     .fin-modal-titre { font-family:var(--font-titre); font-size:22px; color:var(--foret); margin-bottom:8px; }
     .fin-modal-desc  { font-family:var(--font-titre); font-style:italic; font-size:14px; color:var(--terre); line-height:1.7; }
 
+    /* Bouton rejouer fixe en haut à gauche */
+    .fin-rejouer-top { position:fixed; top:24px; left:28px; z-index:600; display:inline-flex; align-items:center; gap:6px; padding:9px 20px; background:var(--papier); color:var(--encre); font-family:var(--font-corps); font-size:11px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; text-decoration:none; box-shadow:3px 3px 0 rgba(0,0,0,.2); transition:transform .15s,box-shadow .15s; }
+    .fin-rejouer-top:hover { transform:translate(-2px,-2px); box-shadow:5px 5px 0 rgba(0,0,0,.2); }
+
+    /* Raison fin */
+    .fin-raison { display:flex; align-items:flex-start; gap:12px; max-width:500px; background:rgba(255,255,255,.07); border-left:3px solid rgba(255,255,255,.25); padding:14px 18px; }
+    .fin-raison-ico { font-size:18px; flex-shrink:0; margin-top:1px; }
+    .fin-raison-texte { font-family:var(--font-corps); font-size:13px; color:rgba(244,240,230,.85); line-height:1.65; margin:0; }
+
+    /* Journal fin */
+    .fin-journal { width:100%; max-width:580px; }
+    .fin-journal-liste { margin-top:10px; display:flex; flex-direction:column; }
+    .fin-journal-entree { display:flex; align-items:baseline; gap:10px; padding:7px 10px; border-bottom:1px solid rgba(255,255,255,.07); }
+    .fin-journal-entree:last-child { border-bottom:none; }
+    .fin-j-emoji { font-size:13px; flex-shrink:0; }
+    .fin-j-annee { font-family:var(--font-code); font-size:10px; color:rgba(244,240,230,.45); flex-shrink:0; min-width:32px; }
+    .fin-j-texte { font-family:var(--font-corps); font-size:12px; color:rgba(244,240,230,.7); line-height:1.4; }
+
     .canvas-fin { position:fixed; inset:0; pointer-events:none; z-index:0; }
     .page > * { position:relative; z-index:1; }
   </style>
 </head>
 <body>
+
+  <a href="/" class="fin-rejouer-top">↩ Rejouer</a>
 
   <canvas class="canvas-fin" id="cendres"></canvas>
 
@@ -76,9 +96,13 @@
     <h1 class="fin-titre a2">Extinction.</h1>
 
     <p class="fin-sous a2">
-      L'équilibre s'est brisé à l'<strong>année {{ annee }}</strong>.<br>
-      La chaîne alimentaire s'est effondrée.
+      L'équilibre s'est brisé à l'<strong>année {{ annee }}</strong>.
     </p>
+
+    <div class="fin-raison a2">
+      <span class="fin-raison-ico">💡</span>
+      <p class="fin-raison-texte">{{ raison_fin }}</p>
+    </div>
 
     <div class="fin-stats a3">
       <div class="fin-stat"><div class="fin-stat-label">Années</div><div class="fin-stat-val">{{annee}}</div></div>
@@ -107,6 +131,22 @@
       </div>
     </div>
 
+    <!-- Journal de bord -->
+    {% if journal %}
+    <div class="fin-journal a4">
+      <p class="fin-graph-titre">Journal de bord</p>
+      <div class="fin-journal-liste">
+        {% for e in journal %}
+        <div class="fin-journal-entree">
+          <span class="fin-j-emoji">{{ e.emoji }}</span>
+          <span class="fin-j-annee">A{{ e.annee }}</span>
+          <span class="fin-j-texte">{{ e.texte }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
     <!-- Succès -->
     <div class="fin-succes a4">
       <p class="fin-succes-titre">Succès obtenus</p>
@@ -120,10 +160,6 @@
         </div>
         {% endfor %}
       </div>
-    </div>
-
-    <div class="a5">
-      <a href="/" class="btn btn-principal" style="background:var(--papier);color:var(--encre);">↩ Rejouer</a>
     </div>
 
   </div>

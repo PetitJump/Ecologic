@@ -43,13 +43,19 @@
   <div class="page">
 
     <div class="a1" style="text-align:center; margin-bottom: 20px;">
-      <span class="label-petit">Année {{annee}} · Intervention</span>
+      <span class="label-petit">Année {{annee}} · Intervention {{nb_interventions + 1}} / {{max_interventions}}</span>
       <h1 style="font-family:var(--font-titre);font-size:clamp(26px,4vw,40px);color:var(--foret);margin-top:8px">
         Ajouter des individus
       </h1>
+      {% if limite_atteinte %}
+      <p style="font-family:var(--font-corps);font-size:13px;font-weight:700;color:#a03030;margin-top:8px;padding:10px 16px;background:#fff0f0;border-left:3px solid #a03030;max-width:400px;margin-left:auto;margin-right:auto;">
+        Limite d'interventions atteinte ({{ max_interventions }}/{{ max_interventions }}). Vous ne pouvez plus ajouter d'individus.
+      </p>
+      {% else %}
       <p style="font-family:var(--font-titre);font-style:italic;font-size:15px;color:var(--terre);margin-top:6px">
         Intervenez dans l'écosystème pour rééquilibrer les populations
       </p>
+      {% endif %}
     </div>
 
     <form action="/update_ajouter" method="POST" style="width:100%">
@@ -62,7 +68,7 @@
             <span class="slider-valeur" id="qloup">0</span>
           </div>
           <p class="slider-description">Actuellement <strong>{{predateur}}</strong> loup(s) dans l'écosystème.</p>
-          <input type="range" id="loup" name="loup" min="0" max="20" value="0" step="1" class="customrangerouge">
+          <input type="range" id="loup" name="loup" min="0" max="20" value="0" step="1" class="customrangerouge" {% if limite_atteinte %}disabled{% endif %}>
         </div>
 
         <div class="ligne-slider cerf-bloc">
@@ -71,7 +77,7 @@
             <span class="slider-valeur" id="qcerf">0</span>
           </div>
           <p class="slider-description">Actuellement <strong>{{proie}}</strong> cerf(s) dans l'écosystème.</p>
-          <input type="range" id="cerf" name="cerf" min="0" max="20" value="0" step="1" class="customrangebleu">
+          <input type="range" id="cerf" name="cerf" min="0" max="20" value="0" step="1" class="customrangebleu" {% if limite_atteinte %}disabled{% endif %}>
         </div>
 
         <div class="ligne-slider herbe-bloc">
@@ -80,7 +86,7 @@
             <span class="slider-valeur" id="qherbe">0</span>
           </div>
           <p class="slider-description">Actuellement <strong>{{vegetal}}</strong> touffes d'herbe dans l'écosystème.</p>
-          <input type="range" id="herbe" name="herbe" min="0" max="20" value="0" step="1" class="customrangevert">
+          <input type="range" id="herbe" name="herbe" min="0" max="20" value="0" step="1" class="customrangevert" {% if limite_atteinte %}disabled{% endif %}>
         </div>
 
       </div>
@@ -91,8 +97,8 @@
       <input type="hidden" name="base_herbe" value="{{vegetal}}">
 
       <div class="a3" style="display:flex;justify-content:center;margin-top:32px">
-        <button type="submit" class="btn btn-principal" style="padding:14px 48px">
-          Continuer →
+        <button type="submit" class="btn btn-principal" style="padding:14px 48px" {% if limite_atteinte %}disabled style="opacity:.4;cursor:not-allowed"{% endif %}>
+          {% if limite_atteinte %}Limite atteinte{% else %}Continuer →{% endif %}
         </button>
       </div>
 

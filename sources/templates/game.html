@@ -719,8 +719,8 @@
     if(newContent) {
       document.getElementById('app-container').innerHTML = newContent.innerHTML;
       document.title = doc.title;
-      // Ré-initialiser le jeu
       nextYearHtml = null;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       initGame();
     } else {
       // Cas de secours : rechargement normal

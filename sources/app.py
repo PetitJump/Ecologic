@@ -18,6 +18,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # jeu : dict {session_id -> objet Jeu} — non sérialisable, reste en mémoire serveur
 # historique : stocké dans session Flask (listes de nombres, sérialisable)
 _jeux = {}  # {session_id: Jeu}
+_MAX_JEUX = 500  # Limite pour éviter la fuite mémoire sur le serveur
 
 def get_session_id():
     """Retourne un identifiant unique par session utilisateur."""
@@ -31,6 +32,8 @@ def get_jeu():
     return _jeux.get(get_session_id())
 
 def set_jeu(j):
+    if len(_jeux) >= _MAX_JEUX:
+        del _jeux[next(iter(_jeux))]  # Supprime l'entrée la plus ancienne
     _jeux[get_session_id()] = j
 
 def get_historique():
@@ -44,7 +47,7 @@ SUCCES_DEF = [
     {"id": "premier_pas",  "emoji": "🌱", "nom": "Premier pas",
      "desc": "Lancer la simulation pour la première fois. Bienvenue dans l'écosystème !"},
     {"id": "equilibre",    "emoji": "⚖️",  "nom": "Équilibre fragile",
-     "desc": "Maintenir les trois espèces en vie pendant au moins 10 ans. La nature trouve son équilibre."},
+     "desc": "Maintenir les trois espèces en vie pendant au moins 40 ans. La nature trouve son équilibre."},
     {"id": "meute_royale", "emoji": "🐺", "nom": "Meute royale",
      "desc": "Atteindre une population de 75 loups. La forêt leur appartient."},
     {"id": "troupeau",     "emoji": "🦌", "nom": "Troupeau parfait",
@@ -423,6 +426,39 @@ def get_leaderboards():
 # Initialiser la DB au démarrage (avec migration automatique si besoin)
 init_db()
 
+MAX_INTERVENTIONS = 5
+
+def generer_raison_fin(espece_morte, historique):
+    """Génère une phrase explicative pour la fin de partie."""
+    hist_l = historique.get("loup", [])
+    hist_c = historique.get("cerf", [])
+    hist_h = historique.get("herbe", [])
+
+    if espece_morte == "loups":
+        if len(hist_c) >= 2 and hist_c[-2] == 0:
+            return "Les cerfs avaient déjà tous disparu. Sans proies, les loups sont morts de faim l'année suivante."
+        if len(hist_c) >= 1 and hist_c[-1] < 5:
+            return "Les cerfs étaient trop peu nombreux pour nourrir la meute. Les loups sont morts de faim."
+        return "La population de loups s'est effondrée — mortalité naturelle trop élevée ou reproduction insuffisante."
+
+    elif espece_morte == "cerfs":
+        if len(hist_l) >= 2 and len(hist_c) >= 2 and hist_c[-2] > 0:
+            ratio = hist_l[-2] / max(hist_c[-2], 1)
+            if ratio > 0.3:
+                return (f"Les loups ({hist_l[-2]}) étaient beaucoup trop nombreux face aux cerfs ({hist_c[-2]}). "
+                        f"Ils ont tout dévoré en une seule année.")
+        if len(hist_h) >= 1 and hist_h[-1] < 30:
+            return "Les cerfs manquaient cruellement d'herbe et sont morts de famine."
+        return "Les cerfs ont été décimés par la prédation ou le manque de végétation."
+
+    elif espece_morte == "herbe":
+        if len(hist_c) >= 1 and hist_c[-1] > 300:
+            return (f"La surpopulation de cerfs ({hist_c[-1]}) a épuisé toute l'herbe disponible. "
+                    f"Sans végétation, la chaîne alimentaire s'est brisée.")
+        return "Les cerfs ont consommé toute l'herbe. Sans base végétale, l'écosystème s'est effondré."
+
+    return "L'équilibre naturel s'est brisé."
+
 # ── Routes ────────────────────────────────────────────────────────────────────
 
 @app.route("/")
@@ -461,8 +497,11 @@ def game():
         set_jeu(j)
         set_historique({"loup": [], "cerf": [], "herbe": []})
         session["journal"] = []
+        session["nb_interventions"] = 0
 
     jeu = get_jeu()
+    if jeu is None:
+        return redirect(url_for('init'))
     historique = get_historique()
     prev_l = historique["loup"][-1] if historique["loup"] else None
     prev_c = historique["cerf"][-1] if historique["cerf"] else None
@@ -490,7 +529,9 @@ def game():
             annee=annee, espece_morte=espece_morte,
             predateur=predateur, proie=proie, vegetal=vegetal,
             succes_list=SUCCES_DEF, succes_courants=sc,
-            historique=json.dumps(historique))
+            historique=json.dumps(historique),
+            journal=session.get("journal", []),
+            raison_fin=generer_raison_fin(espece_morte, historique))
 
     args = build_render_args(annee, predateur, proie, vegetal, meteo_event, [], prev_l, prev_c, prev_v, historique)
     return render_template("game.html", **args)
@@ -501,6 +542,8 @@ def accelerer():
     nb_annees = max(1, min(50, int(request.form.get("nb_annees", 5))))
     annee = int(request.form["annee"])
     jeu = get_jeu()
+    if jeu is None:
+        return redirect(url_for('init'))
     historique = get_historique()
 
     prev_l = historique["loup"][-1] if historique["loup"] else None
@@ -531,7 +574,9 @@ def accelerer():
                 annee=annee, espece_morte=espece_morte,
                 predateur=predateur, proie=proie, vegetal=vegetal,
                 succes_list=SUCCES_DEF, succes_courants=sc,
-                historique=json.dumps(historique))
+                historique=json.dumps(historique),
+                journal=session.get("journal", []),
+                raison_fin=generer_raison_fin(espece_morte, historique))
 
     set_historique(historique)
     args = build_render_args(annee, predateur, proie, vegetal,
@@ -542,11 +587,17 @@ def accelerer():
 @app.route("/update_ajouter", methods=["GET", "POST"])
 def update_ajouter():
     jeu = get_jeu()
+    if jeu is None:
+        return redirect(url_for('init'))
     historique = get_historique()
     annee = int(request.form["base_annee"])
-    for _ in range(int(request.form["loup"])): jeu.meute.predateurs.append(Predateur("loup", 0))
-    for _ in range(int(request.form["cerf"])): jeu.proies.append(Proie("cerf", 0))
-    for _ in range(int(request.form["herbe"])): jeu.vegetaux.append(Vegetal("herbe"))
+    nb_interventions = session.get("nb_interventions", 0)
+    if nb_interventions < MAX_INTERVENTIONS:
+        for _ in range(int(request.form["loup"])): jeu.meute.predateurs.append(Predateur("loup", 0))
+        for _ in range(int(request.form["cerf"])): jeu.proies.append(Proie("cerf", 0))
+        for _ in range(int(request.form["herbe"])): jeu.vegetaux.append(Vegetal("herbe"))
+        session["nb_interventions"] = nb_interventions + 1
+        session.modified = True
 
     prev_l = historique["loup"][-1] if historique["loup"] else None
     prev_c = historique["cerf"][-1] if historique["cerf"] else None
@@ -574,7 +625,9 @@ def update_ajouter():
             annee=annee, espece_morte=espece_morte,
             predateur=predateur, proie=proie, vegetal=vegetal,
             succes_list=SUCCES_DEF, succes_courants=sc,
-            historique=json.dumps(historique))
+            historique=json.dumps(historique),
+            journal=session.get("journal", []),
+            raison_fin=generer_raison_fin(espece_morte, historique))
 
     args = build_render_args(annee, predateur, proie, vegetal, meteo_event, [], prev_l, prev_c, prev_v, historique)
     return render_template("game.html", **args)
@@ -582,10 +635,16 @@ def update_ajouter():
 @app.route("/ajouter", methods=["GET", "POST"])
 def ajouter():
     jeu = get_jeu()
+    if jeu is None:
+        return redirect(url_for('init'))
     annee = int(request.form["annee"])
+    nb_interventions = session.get("nb_interventions", 0)
     return render_template("ajouter.html",
         annee=annee, predateur=len(jeu.meute.predateurs),
-        proie=len(jeu.proies), vegetal=len(jeu.vegetaux))
+        proie=len(jeu.proies), vegetal=len(jeu.vegetaux),
+        nb_interventions=nb_interventions,
+        max_interventions=MAX_INTERVENTIONS,
+        limite_atteinte=(nb_interventions >= MAX_INTERVENTIONS))
 
 @app.route("/reset_succes")
 def reset_succes():
