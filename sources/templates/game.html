@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
@@ -213,428 +213,524 @@
   </style>
 </head>
 <body>
-
-  {% if prevision %}
-  <div class="prevision-bandeau {{ prevision.niveau }}">
-    <span class="prev-ico">{{ prevision.emoji }}</span>
-    <span class="prev-texte">{{ prevision.texte }}</span>
-  </div>
-  {% endif %}
-
-  <div class="chargement" id="chargement"></div>
-  <div class="cadre"></div>
-  <a href="/" class="nav-retour">← Accueil</a>
-
-  {% if meteo %}
-  <div id="meteo-overlay">
-    <canvas id="meteo-canvas"></canvas>
-    <div class="meteo-carte">
-      <span class="meteo-emoji">{{ meteo.emoji }}</span>
-      <h2 class="meteo-nom">{{ meteo.nom }}</h2>
-      <p class="meteo-desc">{{ meteo.description }}</p>
-      <button class="meteo-continuer" onclick="fermerMeteo()">Continuer →</button>
+  <div id="app-container">
+    {% if prevision %}
+    <div class="prevision-bandeau {{ prevision.niveau }}">
+      <span class="prev-ico">{{ prevision.emoji }}</span>
+      <span class="prev-texte">{{ prevision.texte }}</span>
     </div>
-  </div>
-  {% endif %}
+    {% endif %}
 
-  <div id="succes-toasts">
-    {% for s in nouveaux_succes %}
-    <div class="succes-toast" id="toast-{{s.id}}">
-      <span class="toast-emoji">{{s.emoji}}</span>
-      <div class="toast-texte">
-        <div class="toast-titre">Succès débloqué !</div>
-        <div class="toast-nom">{{s.nom}}</div>
+    <div class="chargement" id="chargement"></div>
+    <div class="cadre"></div>
+    <a href="/" class="nav-retour">← Accueil</a>
+
+    {% if meteo %}
+    <div id="meteo-overlay">
+      <canvas id="meteo-canvas"></canvas>
+      <div class="meteo-carte">
+        <span class="meteo-emoji">{{ meteo.emoji }}</span>
+        <h2 class="meteo-nom">{{ meteo.nom }}</h2>
+        <p class="meteo-desc">{{ meteo.description }}</p>
+        <button class="meteo-continuer" onclick="fermerMeteo()">Continuer →</button>
       </div>
     </div>
-    {% endfor %}
-  </div>
+    {% endif %}
 
-  <div class="page">
-
-    <div class="badge-annee a1" style="display:inline-flex;align-items:baseline;gap:0">
-      <span class="libelle">Année</span>
-      <span class="numero">{{annee}}</span>
-      {% if annees_sautees is defined and annees_sautees %}
-      <span class="badge-saut">+{{annees_sautees}} ans simulés</span>
-      {% endif %}
+    <div id="succes-toasts">
+      {% for s in nouveaux_succes %}
+      <div class="succes-toast" id="toast-{{s.id}}">
+        <span class="toast-emoji">{{s.emoji}}</span>
+        <div class="toast-texte">
+          <div class="toast-titre">Succès débloqué !</div>
+          <div class="toast-nom">{{s.nom}}</div>
+        </div>
+      </div>
+      {% endfor %}
     </div>
 
-    <div class="grille-stats a2">
+    <div class="page">
 
-      <div class="meute-wrapper">
-        {% set nb_meutes = (predateur // 10) + (1 if predateur % 10 != 0 else 0) if predateur > 0 else 0 %}
-        <span class="meute-flottante">🐾 {{nb_meutes}} Meute{% if nb_meutes > 1 %}s{% endif %}</span>
-        
-        <div class="carte-stat loup-stat" id="card-loup">
-          <div class="stat-espece">Loups
-            {% if delta_l is not none %}
-              {% if delta_l > 0 %}<span class="stat-delta delta-plus">▲ +{{delta_l}}</span>
-              {% elif delta_l < 0 %}<span class="stat-delta delta-minus">▼ {{delta_l}}</span>
+      <div class="badge-annee a1" style="display:inline-flex;align-items:baseline;gap:0">
+        <span class="libelle">Année</span>
+        <span class="numero">{{annee}}</span>
+        {% if annees_sautees is defined and annees_sautees %}
+        <span class="badge-saut">+{{annees_sautees}} ans simulés</span>
+        {% endif %}
+      </div>
+
+      <div class="grille-stats a2">
+
+        <div class="meute-wrapper">
+          {% set nb_meutes = (predateur // 10) + (1 if predateur % 10 != 0 else 0) if predateur > 0 else 0 %}
+          <span class="meute-flottante">🐾 {{nb_meutes}} Meute{% if nb_meutes > 1 %}s{% endif %}</span>
+          
+          <div class="carte-stat loup-stat" id="card-loup">
+            <div class="stat-espece">Loups
+              {% if delta_l is not none %}
+                {% if delta_l > 0 %}<span class="stat-delta delta-plus">▲ +{{delta_l}}</span>
+                {% elif delta_l < 0 %}<span class="stat-delta delta-minus">▼ {{delta_l}}</span>
+                {% else %}<span class="stat-delta delta-zero">→ stable</span>{% endif %}
+              {% endif %}
+            </div>
+            <div class="stat-nombre" id="val-loup">{{predateur}}</div>
+            <div class="stat-barre-wrap">
+              <div class="stat-barre" id="barre-loup" style="background:#8b2e2e; width:{{ [predateur/0.5,100]|min }}%"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="carte-stat cerf-stat" id="card-cerf">
+          <div class="stat-espece">Cerfs
+            {% if delta_c is not none %}
+              {% if delta_c > 0 %}<span class="stat-delta delta-plus">▲ +{{delta_c}}</span>
+              {% elif delta_c < 0 %}<span class="stat-delta delta-minus">▼ {{delta_c}}</span>
               {% else %}<span class="stat-delta delta-zero">→ stable</span>{% endif %}
             {% endif %}
           </div>
-          <div class="stat-nombre" id="val-loup">{{predateur}}</div>
+          <div class="stat-nombre" id="val-cerf">{{proie}}</div>
           <div class="stat-barre-wrap">
-            <div class="stat-barre" id="barre-loup" style="background:#8b2e2e; width:{{ [predateur/0.5,100]|min }}%"></div>
+            <div class="stat-barre" id="barre-cerf" style="background:#3a5f8a; width:{{ [proie/5,100]|min }}%"></div>
+          </div>
+        </div>
+
+        <div class="carte-stat herbe-stat" id="card-herbe">
+          <div class="stat-espece">Herbe
+            {% if delta_v is not none %}
+              {% if delta_v > 0 %}<span class="stat-delta delta-plus">▲ +{{delta_v}}</span>
+              {% elif delta_v < 0 %}<span class="stat-delta delta-minus">▼ {{delta_v}}</span>
+              {% else %}<span class="stat-delta delta-zero">→ stable</span>{% endif %}
+            {% endif %}
+          </div>
+          <div class="stat-nombre" id="val-herbe">{{vegetal}}</div>
+          <div class="stat-barre-wrap">
+            <div class="stat-barre" id="barre-herbe" style="background:#4a7c4a; width:{{ [vegetal/10,100]|min }}%"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="donut-wrap a3">
+        <canvas id="donut-canvas" width="110" height="110"></canvas>
+        <div class="donut-legende">
+          <div class="donut-leg">
+            <span class="donut-leg-dot" style="background:#8b2e2e"></span>
+            <span class="donut-leg-label">Loups</span>
+            <span class="donut-leg-val">{{predateur}}</span>
+            <span class="donut-leg-pct" id="pct-loup"></span>
+          </div>
+          <div class="donut-leg">
+            <span class="donut-leg-dot" style="background:#3a5f8a"></span>
+            <span class="donut-leg-label">Cerfs</span>
+            <span class="donut-leg-val">{{proie}}</span>
+            <span class="donut-leg-pct" id="pct-cerf"></span>
           </div>
         </div>
       </div>
 
-      <div class="carte-stat cerf-stat" id="card-cerf">
-        <div class="stat-espece">Cerfs
-          {% if delta_c is not none %}
-            {% if delta_c > 0 %}<span class="stat-delta delta-plus">▲ +{{delta_c}}</span>
-            {% elif delta_c < 0 %}<span class="stat-delta delta-minus">▼ {{delta_c}}</span>
-            {% else %}<span class="stat-delta delta-zero">→ stable</span>{% endif %}
+      <div class="actions-jeu a4">
+        <form action="/game" method="POST" id="form-annee-suivante">
+          <input type="hidden" name="annee" value="{{annee}}">
+          <input type="hidden" name="loup"  value="{{predateur}}">
+          <input type="hidden" name="cerf"  value="{{proie}}">
+          <input type="hidden" name="herbe" value="{{vegetal}}">
+          <button type="submit" class="btn btn-principal" id="btn-annee-suivante">Année suivante →</button>
+        </form>
+        <form action="/ajouter" method="POST" onsubmit="lancerChargement()">
+          <input type="hidden" name="annee" value="{{annee}}">
+          <input type="hidden" name="loup"  value="{{predateur}}">
+          <input type="hidden" name="cerf"  value="{{proie}}">
+          <input type="hidden" name="herbe" value="{{vegetal}}">
+          <button type="submit" class="btn btn-ajout">+ Ajouter des espèces</button>
+        </form>
+      </div>
+
+      <div class="accel-wrap a4">
+        <form action="/accelerer" method="POST" class="accel-form" onsubmit="lancerChargement()">
+          <input type="hidden" name="annee" value="{{annee}}">
+          <div class="accel-label">
+            Avancer de plusieurs années
+            <small>Simule X années en une seule fois</small>
+          </div>
+          <input type="number" name="nb_annees" class="accel-input" min="2" max="50" value="5">
+          <button type="submit" class="btn-accel">⏩ Avancer</button>
+        </form>
+      </div>
+
+      <div class="graph-wrap a4">
+        <p class="titre-section">Évolution des populations</p>
+        <canvas id="graph-canvas" height="220"></canvas>
+        <div class="graph-legende">
+          <span class="graph-leg"><span class="graph-leg-dot" style="background:#8b2e2e"></span>Loups</span>
+          <span class="graph-leg"><span class="graph-leg-dot" style="background:#3a5f8a"></span>Cerfs</span>
+          <span class="graph-leg"><span class="graph-leg-dot" style="background:#4a7c4a"></span>Herbe</span>
+        </div>
+      </div>
+
+      <div class="journal-wrap a5">
+        <p class="titre-section">Journal de bord</p>
+        <div class="journal-liste">
+          {% if journal %}
+            {% for e in journal %}
+            <div class="journal-entree">
+              <span class="journal-emoji">{{ e.emoji }}</span>
+              <span class="journal-annee">A{{ e.annee }}</span>
+              <span class="journal-texte">{{ e.texte }}</span>
+            </div>
+            {% endfor %}
+          {% else %}
+            <p class="journal-vide">Aucun événement notable pour l'instant…</p>
           {% endif %}
         </div>
-        <div class="stat-nombre" id="val-cerf">{{proie}}</div>
-        <div class="stat-barre-wrap">
-          <div class="stat-barre" id="barre-cerf" style="background:#3a5f8a; width:{{ [proie/5,100]|min }}%"></div>
-        </div>
       </div>
 
-      <div class="carte-stat herbe-stat" id="card-herbe">
-        <div class="stat-espece">Herbe
-          {% if delta_v is not none %}
-            {% if delta_v > 0 %}<span class="stat-delta delta-plus">▲ +{{delta_v}}</span>
-            {% elif delta_v < 0 %}<span class="stat-delta delta-minus">▼ {{delta_v}}</span>
-            {% else %}<span class="stat-delta delta-zero">→ stable</span>{% endif %}
-          {% endif %}
-        </div>
-        <div class="stat-nombre" id="val-herbe">{{vegetal}}</div>
-        <div class="stat-barre-wrap">
-          <div class="stat-barre" id="barre-herbe" style="background:#4a7c4a; width:{{ [vegetal/10,100]|min }}%"></div>
-        </div>
-      </div>
-
-    </div>
-
-    <div class="donut-wrap a3">
-      <canvas id="donut-canvas" width="110" height="110"></canvas>
-      <div class="donut-legende">
-        <div class="donut-leg">
-          <span class="donut-leg-dot" style="background:#8b2e2e"></span>
-          <span class="donut-leg-label">Loups</span>
-          <span class="donut-leg-val">{{predateur}}</span>
-          <span class="donut-leg-pct" id="pct-loup"></span>
-        </div>
-        <div class="donut-leg">
-          <span class="donut-leg-dot" style="background:#3a5f8a"></span>
-          <span class="donut-leg-label">Cerfs</span>
-          <span class="donut-leg-val">{{proie}}</span>
-          <span class="donut-leg-pct" id="pct-cerf"></span>
-        </div>
-      </div>
-    </div>
-
-    <div class="actions-jeu a4">
-      <form action="/game" method="POST" onsubmit="lancerChargement()">
-        <input type="hidden" name="annee" value="{{annee}}">
-        <input type="hidden" name="loup"  value="{{predateur}}">
-        <input type="hidden" name="cerf"  value="{{proie}}">
-        <input type="hidden" name="herbe" value="{{vegetal}}">
-        <button type="submit" class="btn btn-principal">Année suivante →</button>
-      </form>
-      <form action="/ajouter" method="POST" onsubmit="lancerChargement()">
-        <input type="hidden" name="annee" value="{{annee}}">
-        <input type="hidden" name="loup"  value="{{predateur}}">
-        <input type="hidden" name="cerf"  value="{{proie}}">
-        <input type="hidden" name="herbe" value="{{vegetal}}">
-        <button type="submit" class="btn btn-ajout">+ Ajouter des espèces</button>
-      </form>
-    </div>
-
-    <div class="accel-wrap a4">
-      <form action="/accelerer" method="POST" class="accel-form" onsubmit="lancerChargement()">
-        <input type="hidden" name="annee" value="{{annee}}">
-        <div class="accel-label">
-          Avancer de plusieurs années
-          <small>Simule X années en une seule fois</small>
-        </div>
-        <input type="number" name="nb_annees" class="accel-input" min="2" max="50" value="5">
-        <button type="submit" class="btn-accel">⏩ Avancer</button>
-      </form>
-    </div>
-
-    <div class="graph-wrap a4">
-      <p class="titre-section">Évolution des populations</p>
-      <canvas id="graph-canvas" height="220"></canvas>
-      <div class="graph-legende">
-        <span class="graph-leg"><span class="graph-leg-dot" style="background:#8b2e2e"></span>Loups</span>
-        <span class="graph-leg"><span class="graph-leg-dot" style="background:#3a5f8a"></span>Cerfs</span>
-        <span class="graph-leg"><span class="graph-leg-dot" style="background:#4a7c4a"></span>Herbe</span>
-      </div>
-    </div>
-
-    <div class="journal-wrap a5">
-      <p class="titre-section">Journal de bord</p>
-      <div class="journal-liste">
-        {% if journal %}
-          {% for e in journal %}
-          <div class="journal-entree">
-            <span class="journal-emoji">{{ e.emoji }}</span>
-            <span class="journal-annee">A{{ e.annee }}</span>
-            <span class="journal-texte">{{ e.texte }}</span>
+      <div class="succes-bouton-wrap a5">
+        <p class="titre-section">Succès
+          <span style="font-family:var(--font-corps);font-size:11px;font-weight:400;opacity:.5;margin-left:8px;">
+            {% set nb_obtenus = succes_courants.values()|list|select|list|length %}
+            {{ nb_obtenus }} / {{ succes_list|length }}
+          </span>
+        </p>
+        <div class="succes-grille">
+          {% for s in succes_list %}
+          <div class="succes-item {% if succes_courants[s.id] %}obtenu{% endif %}"
+               data-emoji="{{s.emoji}}" data-nom="{{s.nom|e}}"
+               data-desc="{{s.desc|e}}" data-obtenu="{{succes_courants[s.id]|lower}}">
+            <span class="succes-item-emoji">{{s.emoji}}</span>
+            <span class="succes-item-nom">{{s.nom}}</span>
           </div>
           {% endfor %}
-        {% else %}
-          <p class="journal-vide">Aucun événement notable pour l'instant…</p>
-        {% endif %}
-      </div>
-    </div>
-
-    <div class="succes-bouton-wrap a5">
-      <p class="titre-section">Succès
-        <span style="font-family:var(--font-corps);font-size:11px;font-weight:400;opacity:.5;margin-left:8px;">
-          {% set nb_obtenus = succes_courants.values()|list|select|list|length %}
-          {{ nb_obtenus }} / {{ succes_list|length }}
-        </span>
-      </p>
-      <div class="succes-grille">
-        {% for s in succes_list %}
-        <div class="succes-item {% if succes_courants[s.id] %}obtenu{% endif %}"
-             data-emoji="{{s.emoji}}" data-nom="{{s.nom|e}}"
-             data-desc="{{s.desc|e}}" data-obtenu="{{succes_courants[s.id]|lower}}">
-          <span class="succes-item-emoji">{{s.emoji}}</span>
-          <span class="succes-item-nom">{{s.nom}}</span>
         </div>
-        {% endfor %}
       </div>
+
+      <div id="succes-modal" onclick="if(event.target===this)fermerSucces()">
+        <div class="modal-carte">
+          <button class="modal-close" onclick="fermerSucces()">✕</button>
+          <span class="modal-emoji" id="modal-emoji"></span>
+          <span class="modal-statut" id="modal-statut"></span>
+          <h3 class="modal-titre" id="modal-titre"></h3>
+          <p  class="modal-desc"  id="modal-desc"></p>
+        </div>
+      </div>
+
     </div>
 
-    <div id="succes-modal" onclick="if(event.target===this)fermerSucces()">
-      <div class="modal-carte">
-        <button class="modal-close" onclick="fermerSucces()">✕</button>
-        <span class="modal-emoji" id="modal-emoji"></span>
-        <span class="modal-statut" id="modal-statut"></span>
-        <h3 class="modal-titre" id="modal-titre"></h3>
-        <p  class="modal-desc"  id="modal-desc"></p>
-      </div>
-    </div>
-
+    <!-- Données critiques pour JS -->
+    <script id="game-data" type="application/json">
+      {
+        "predateur": {{predateur}},
+        "proie": {{proie}},
+        "vegetal": {{vegetal}},
+        "historique": {{ historique | safe }},
+        "meteo": {% if meteo %}"{{ meteo.cle }}"{% else %}null{% endif %}
+      }
+    </script>
   </div>
 
   <script>
+  // Variables globales pour le pré-chargement
+  let nextYearHtml = null;
+  let isPreloading = false;
+
   function lancerChargement() {
-    document.getElementById('chargement').classList.add('actif');
+    const loader = document.getElementById('chargement');
+    if(loader) loader.classList.add('actif');
   }
 
-  ['loup','cerf','herbe'].forEach((id,i) => {
-    setTimeout(() => {
-      const c = document.getElementById('card-'+id);
-      if(c){
-        c.classList.add('update');
-        setTimeout(() => c.classList.remove('update'), 700);
-      }
-    }, 300 + i*80);
-  });
+  // Fonction d'initialisation du jeu (Animations, Graphiques, etc.)
+  function initGame() {
+    const dataEl = document.getElementById('game-data');
+    if(!dataEl) return;
+    const GDATA = JSON.parse(dataEl.textContent);
 
-  document.querySelectorAll('.succes-toast').forEach((el, i) => {
-    setTimeout(() => {
-      el.style.transition = 'opacity .5s, transform .5s';
-      el.style.opacity = '0'; el.style.transform = 'translateX(40px)';
-      setTimeout(() => el.remove(), 500);
-    }, 3500 + i * 400);
-  });
-
-  {% if meteo %}
-  const METEO_CLE = "{{ meteo.cle }}";
-  const overlay   = document.getElementById('meteo-overlay');
-  const mcanvas   = document.getElementById('meteo-canvas');
-  const mctx      = mcanvas.getContext('2d');
-  function resizeMeteo() { mcanvas.width=innerWidth; mcanvas.height=innerHeight; }
-  resizeMeteo(); window.addEventListener('resize', resizeMeteo);
-  const particles = [];
-  function initParticules() {
-    particles.length = 0;
-    for (let i=0;i<120;i++) particles.push({x:Math.random()*mcanvas.width,y:Math.random()*mcanvas.height,vx:(Math.random()-.5)*1.5,vy:(Math.random()-.5)*1.5,r:Math.random()*4+1,alpha:Math.random()*.6+.2,phase:Math.random()*Math.PI*2});
-  }
-  initParticules();
-  const COULEURS = { secheresse:{bg:'rgba(255,180,50,.18)',pt:'rgba(255,160,20,'}, pluies:{bg:'rgba(50,120,255,.15)',pt:'rgba(80,160,255,'}, hiver:{bg:'rgba(200,230,255,.2)',pt:'rgba(180,220,255,'}, printemps:{bg:'rgba(100,200,80,.15)',pt:'rgba(120,200,60,'}, incendie:{bg:'rgba(255,60,20,.2)',pt:'rgba(255,80,20,'} };
-  const col = COULEURS[METEO_CLE] || COULEURS.printemps;
-  let animFrame;
-  function animerMeteo() {
-    mctx.clearRect(0,0,mcanvas.width,mcanvas.height);
-    mctx.fillStyle=col.bg; mctx.fillRect(0,0,mcanvas.width,mcanvas.height);
-    const t=Date.now()/1000;
-    particles.forEach(p => {
-      if(METEO_CLE==='pluies'||METEO_CLE==='hiver'){p.vy=Math.abs(p.vy)*1.02+.3;p.vx+=(Math.random()-.5)*.1;}
-      else if(METEO_CLE==='incendie'){p.vy-=.04;p.vx+=Math.sin(t*2+p.phase)*.15;}
-      else if(METEO_CLE==='secheresse'){p.vx+=Math.sin(t*.8+p.phase)*.06;}
-      else{p.vx+=Math.sin(t*.5+p.phase)*.05;p.vy+=Math.cos(t*.4+p.phase)*.05;}
-      p.x+=p.vx; p.y+=p.vy;
-      if(p.x<0)p.x=mcanvas.width; if(p.x>mcanvas.width)p.x=0;
-      if(p.y>mcanvas.height+10)p.y=-10; if(p.y<-10)p.y=mcanvas.height+10;
-      mctx.beginPath(); mctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-      mctx.fillStyle=col.pt+(p.alpha*(.7+Math.sin(t*2+p.phase)*.3))+')'; mctx.fill();
+    // 1. Animations des cartes
+    ['loup','cerf','herbe'].forEach((id,i) => {
+      setTimeout(() => {
+        const c = document.getElementById('card-'+id);
+        if(c){
+          c.classList.add('update');
+          setTimeout(() => c.classList.remove('update'), 700);
+        }
+      }, 300 + i*80);
     });
-    animFrame = requestAnimationFrame(animerMeteo);
-  }
-  setTimeout(()=>{ overlay.classList.add('visible'); animerMeteo(); }, 300);
-  function fermerMeteo() {
-    overlay.style.opacity='0';
-    setTimeout(()=>{ overlay.style.display='none'; cancelAnimationFrame(animFrame); }, 400);
-  }
-  {% else %}
-  function fermerMeteo() {}
-  {% endif %}
 
-  (function() {
-    const L = {{predateur}}, C = {{proie}};
-    const total = L + C;
-    const canvas = document.getElementById('donut-canvas');
-    if(!canvas) return;
-    const ctx = canvas.getContext('2d');
-    const cx = 55, cy = 55, R = 44, r = 26;
-    if (total === 0) {
-      ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2);
-      ctx.strokeStyle='rgba(0,0,0,.1)'; ctx.lineWidth=R-r; ctx.stroke();
-      return;
-    }
-    const vals = [L, C];
-    const cols = ['#8b2e2e','#3a5f8a'];
-    const ids  = ['pct-loup','pct-cerf'];
-    let angle = -Math.PI/2;
-    vals.forEach((v, i) => {
-      const part = v / total;
-      const fin  = angle + part * Math.PI * 2;
-      ctx.beginPath();
-      ctx.arc(cx,cy,R,angle,fin);
-      ctx.arc(cx,cy,r,fin,angle,true);
-      ctx.closePath();
-      ctx.fillStyle = cols[i]; ctx.globalAlpha = .85; ctx.fill();
-      angle = fin;
-      const el = document.getElementById(ids[i]);
-      if (el) el.textContent = Math.round(part*100) + '%';
+    // 2. Toasts succès
+    document.querySelectorAll('.succes-toast').forEach((el, i) => {
+      setTimeout(() => {
+        el.style.transition = 'opacity .5s, transform .5s';
+        el.style.opacity = '0'; el.style.transform = 'translateX(40px)';
+        setTimeout(() => el.remove(), 500);
+      }, 3500 + i * 400);
     });
-    ctx.globalAlpha = 1;
-  })();
 
-  const HIST = {{ historique | safe }};
-  (function() {
-    const canvas = document.getElementById('graph-canvas');
-    if(!canvas) return;
-    canvas.width = canvas.parentElement.offsetWidth || 580;
-    const W=canvas.width, H=220, ctx=canvas.getContext('2d');
-    const hist=HIST, N=hist.loup.length;
-    const PAD={top:38, right:56, bottom:36, left:56};
-    const GW=W-PAD.left-PAD.right, GH=H-PAD.top-PAD.bottom;
-    const maxLC = Math.max(...[...hist.loup,...hist.cerf].filter(v=>v>0),1)*1.15;
-    const maxH  = Math.max(...hist.herbe.filter(v=>v>0),1)*1.15;
-
-    function seeded(s){return()=>{s=(s*9301+49297)%233280;return s/233280;};}
-    const rL=seeded(42),rC=seeded(137),rH=seeded(77);
-    const posL=Array.from({length:16},()=>({x:PAD.left+rL()*GW,y:PAD.top+rL()*GH}));
-    const posC=Array.from({length:18},()=>({x:PAD.left+rC()*GW,y:PAD.top+rC()*GH}));
-    const posH=Array.from({length:22},()=>({x:PAD.left+rH()*GW,y:PAD.top+rH()*GH}));
-    function nbShow(v,m,a){return!v||v<=0||m<=0?0:Math.max(0,Math.min(a,Math.round(v/m*a)));}
-
-    function drawAnimaux(t) {
-      if(!N)return;
-      const nL=nbShow(hist.loup[N-1],maxLC,14), nC=nbShow(hist.cerf[N-1],maxLC,16), nH=nbShow(hist.herbe[N-1],maxH,20);
-      ctx.save(); ctx.textAlign='center'; ctx.textBaseline='middle';
-      for(let i=0;i<nH;i++){const{x,y}=posH[i%posH.length];ctx.globalAlpha=.05+Math.sin(t*.8+i)*.015;ctx.font=(11+Math.sin(t*.4+i))+'px serif';ctx.fillText('🌿',x,y+Math.sin(t*.7+i)*2);}
-      for(let i=0;i<nC;i++){const{x,y}=posC[i%posC.length];ctx.globalAlpha=.07+Math.sin(t*.6+i*.9)*.02;ctx.font=(12+Math.sin(t*.5+i*1.2))+'px serif';ctx.fillText('🦌',x+Math.sin(t*.5+i)*3,y+Math.sin(t*.6+i)*2);}
-      for(let i=0;i<nL;i++){const{x,y}=posL[i%posL.length];ctx.globalAlpha=.09+Math.sin(t*1.1+i)*.03;ctx.font=(13+Math.sin(t*.6+i*.8))+'px serif';ctx.fillText('🐺',x+Math.sin(t*.4+i)*4,y+Math.sin(t*.5+i)*3);}
-      ctx.restore();
-    }
-
-    function fmt(v){return v>=1000?(v/1000).toFixed(1)+'k':Math.round(v);}
-
-    function drawGrille() {
-      ctx.save();
-      for(let i=0;i<=4;i++){
-        const y=PAD.top+(GH/4)*i;
-        ctx.beginPath();ctx.moveTo(PAD.left,y);ctx.lineTo(PAD.left+GW,y);
-        ctx.strokeStyle='rgba(0,0,0,.07)';ctx.lineWidth=1;ctx.stroke();
-        ctx.font='10px "Lato",sans-serif';ctx.textBaseline='middle';
-        ctx.fillStyle='rgba(100,40,40,.6)';ctx.textAlign='right';
-        ctx.fillText(fmt(maxLC*(1-i/4)),PAD.left-6,y);
-        ctx.fillStyle='rgba(40,80,40,.6)';ctx.textAlign='left';
-        ctx.fillText(fmt(maxH*(1-i/4)),PAD.left+GW+6,y);
+    // 3. Météo
+    if (GDATA.meteo) {
+      const METEO_CLE = GDATA.meteo;
+      const overlay   = document.getElementById('meteo-overlay');
+      const mcanvas   = document.getElementById('meteo-canvas');
+      if(mcanvas) {
+        const mctx      = mcanvas.getContext('2d');
+        function resizeMeteo() { mcanvas.width=innerWidth; mcanvas.height=innerHeight; }
+        resizeMeteo(); window.addEventListener('resize', resizeMeteo);
+        const particles = [];
+        function initParticules() {
+          particles.length = 0;
+          for (let i=0;i<120;i++) particles.push({x:Math.random()*mcanvas.width,y:Math.random()*mcanvas.height,vx:(Math.random()-.5)*1.5,vy:(Math.random()-.5)*1.5,r:Math.random()*4+1,alpha:Math.random()*.6+.2,phase:Math.random()*Math.PI*2});
+        }
+        initParticules();
+        const COULEURS = { secheresse:{bg:'rgba(255,180,50,.18)',pt:'rgba(255,160,20,'}, pluies:{bg:'rgba(50,120,255,.15)',pt:'rgba(80,160,255,'}, hiver:{bg:'rgba(200,230,255,.2)',pt:'rgba(180,220,255,'}, printemps:{bg:'rgba(100,200,80,.15)',pt:'rgba(120,200,60,'}, incendie:{bg:'rgba(255,60,20,.2)',pt:'rgba(255,80,20,'} };
+        const col = COULEURS[METEO_CLE] || COULEURS.printemps;
+        let animFrame;
+        function animerMeteo() {
+          mctx.clearRect(0,0,mcanvas.width,mcanvas.height);
+          mctx.fillStyle=col.bg; mctx.fillRect(0,0,mcanvas.width,mcanvas.height);
+          const t=Date.now()/1000;
+          particles.forEach(p => {
+            if(METEO_CLE==='pluies'||METEO_CLE==='hiver'){p.vy=Math.abs(p.vy)*1.02+.3;p.vx+=(Math.random()-.5)*.1;}
+            else if(METEO_CLE==='incendie'){p.vy-=.04;p.vx+=Math.sin(t*2+p.phase)*.15;}
+            else if(METEO_CLE==='secheresse'){p.vx+=Math.sin(t*.8+p.phase)*.06;}
+            else{p.vx+=Math.sin(t*.5+p.phase)*.05;p.vy+=Math.cos(t*.4+p.phase)*.05;}
+            p.x+=p.vx; p.y+=p.vy;
+            if(p.x<0)p.x=mcanvas.width; if(p.x>mcanvas.width)p.x=0;
+            if(p.y>mcanvas.height+10)p.y=-10; if(p.y<-10)p.y=mcanvas.height+10;
+            mctx.beginPath(); mctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+            mctx.fillStyle=col.pt+(p.alpha*(.7+Math.sin(t*2+p.phase)*.3))+')'; mctx.fill();
+          });
+          animFrame = requestAnimationFrame(animerMeteo);
+        }
+        setTimeout(()=>{ if(overlay) overlay.classList.add('visible'); animerMeteo(); }, 300);
+        window.fermerMeteo = function() {
+          if(overlay) {
+            overlay.style.opacity='0';
+            setTimeout(()=>{ overlay.style.display='none'; cancelAnimationFrame(animFrame); }, 400);
+          }
+        };
       }
-      ctx.save();
-      ctx.font='bold 9px "Lato",sans-serif';ctx.textBaseline='bottom';
-      ctx.fillStyle='rgba(139,46,46,.75)';ctx.textAlign='right';
-      ctx.fillText('🐺 Loups & cerfs',PAD.left-2,PAD.top-12);
-      ctx.fillStyle='rgba(40,80,40,.75)';ctx.textAlign='left';
-      ctx.fillText("🌿 Herbe",PAD.left+GW+2,PAD.top-12);
-      ctx.restore();
-      ctx.textAlign='center';ctx.textBaseline='top';
-      ctx.fillStyle='rgba(28,28,26,.35)';ctx.font='10px "Lato",sans-serif';
-      const step=Math.max(1,Math.floor(N/7));
-      for(let i=0;i<N;i+=step){ctx.fillText('A'+(i+1),PAD.left+(N>1?i/(N-1):0)*GW,PAD.top+GH+6);}
-      if(N>1)ctx.fillText('A'+N,PAD.left+GW,PAD.top+GH+6);
-      ctx.save();ctx.setLineDash([3,4]);
-      ctx.beginPath();ctx.moveTo(PAD.left+GW,PAD.top);ctx.lineTo(PAD.left+GW,PAD.top+GH);
-      ctx.strokeStyle='rgba(74,124,74,.2)';ctx.lineWidth=1;ctx.stroke();
-      ctx.restore();ctx.restore();
     }
 
-    function xOf(i,n){return PAD.left+(n>1?i/(n-1):0)*GW;}
-    function yOf(v,m){return PAD.top+GH-Math.min(v/m,1)*GH;}
-
-    function drawCourbe(data,color,lw,maxAx,progress){
-      const total=data.length;
-      if(total<1)return;
-      // n = nb de points animés, total = référence fixe pour les positions X
-      // Sans ça, quand on ajoute des êtres, xOf recalcule tout et le graphique se compresse
-      const n=Math.max(1,Math.round(total*progress)),pts=data.slice(0,n);
-      ctx.save();ctx.beginPath();
-      pts.forEach((v,i)=>{const x=xOf(i,total),y=yOf(v,maxAx);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
-      if(n>1){ctx.lineTo(xOf(n-1,total),PAD.top+GH);ctx.lineTo(PAD.left,PAD.top+GH);ctx.closePath();}
-      ctx.globalAlpha=.08;ctx.fillStyle=color;ctx.fill();ctx.restore();
-      if(n<2)return;
-      ctx.save();ctx.beginPath();
-      pts.forEach((v,i)=>{
-        const x=xOf(i,total),y=yOf(v,maxAx);
-        if(!i){ctx.moveTo(x,y);return;}
-        const px=xOf(i-1,total),py=yOf(pts[i-1],maxAx);
-        ctx.bezierCurveTo((px+x)/2,py,(px+x)/2,y,x,y);
+    // 4. Donut Chart
+    (function() {
+      const L = GDATA.predateur, C = GDATA.proie;
+      const total = L + C;
+      const canvas = document.getElementById('donut-canvas');
+      if(!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const cx = 55, cy = 55, R = 44, r = 26;
+      if (total === 0) {
+        ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2);
+        ctx.strokeStyle='rgba(0,0,0,.1)'; ctx.lineWidth=R-r; ctx.stroke();
+        return;
+      }
+      const vals = [L, C];
+      const cols = ['#8b2e2e','#3a5f8a'];
+      const ids  = ['pct-loup','pct-cerf'];
+      let angle = -Math.PI/2;
+      vals.forEach((v, i) => {
+        const part = v / total;
+        const fin  = angle + part * Math.PI * 2;
+        ctx.beginPath();
+        ctx.arc(cx,cy,R,angle,fin);
+        ctx.arc(cx,cy,r,fin,angle,true);
+        ctx.closePath();
+        ctx.fillStyle = cols[i]; ctx.globalAlpha = .85; ctx.fill();
+        angle = fin;
+        const el = document.getElementById(ids[i]);
+        if (el) el.textContent = Math.round(part*100) + '%';
       });
-      ctx.strokeStyle=color;ctx.lineWidth=lw;ctx.lineJoin='round';ctx.lineCap='round';ctx.globalAlpha=.88;ctx.stroke();ctx.restore();
-      const lx=xOf(n-1,total),ly=yOf(pts[n-1],maxAx),pulse=.3+Math.sin(Date.now()/350)*.25;
-      ctx.save();ctx.globalAlpha=pulse;ctx.beginPath();ctx.arc(lx,ly,8,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();
-      ctx.globalAlpha=1;ctx.beginPath();ctx.arc(lx,ly,3.5,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();ctx.restore();
-    }
+      ctx.globalAlpha = 1;
+    })();
 
-    let t0=null; const DUR=900;
-    function render(ts){
-      if(!t0)t0=ts;
-      const ep=1-Math.pow(1-Math.min(1,(ts-t0)/DUR),3),t=ts/1000;
-      ctx.clearRect(0,0,W,H);ctx.fillStyle='#ede8d8';ctx.fillRect(0,0,W,H);
-      drawAnimaux(t);
-      if(N>0){
-        drawGrille();
-        drawCourbe(hist.herbe,'#4a7c4a',2,maxH,ep);
-        drawCourbe(hist.cerf,'#3a5f8a',2.5,maxLC,ep);
-        drawCourbe(hist.loup,'#8b2e2e',3,maxLC,ep);
-      } else {
-        ctx.fillStyle='rgba(28,28,26,.35)';ctx.font='13px "Playfair Display",serif';
-        ctx.textAlign='center';ctx.textBaseline='middle';
-        ctx.fillText("Avancez dans la simulation pour voir l'évolution",W/2,H/2);
+    // 5. Graphique principal
+    (function() {
+      const canvas = document.getElementById('graph-canvas');
+      if(!canvas) return;
+      canvas.width = canvas.parentElement.offsetWidth || 580;
+      const W=canvas.width, H=220, ctx=canvas.getContext('2d');
+      const hist=GDATA.historique, N=hist.loup.length;
+      const PAD={top:38, right:56, bottom:36, left:56};
+      const GW=W-PAD.left-PAD.right, GH=H-PAD.top-PAD.bottom;
+      const maxLC = Math.max(...[...hist.loup,...hist.cerf].filter(v=>v>0),1)*1.15;
+      const maxH  = Math.max(...hist.herbe.filter(v=>v>0),1)*1.15;
+
+      function seeded(s){return()=>{s=(s*9301+49297)%233280;return s/233280;};}
+      const rL=seeded(42),rC=seeded(137),rH=seeded(77);
+      const posL=Array.from({length:16},()=>({x:PAD.left+rL()*GW,y:PAD.top+rL()*GH}));
+      const posC=Array.from({length:18},()=>({x:PAD.left+rC()*GW,y:PAD.top+rC()*GH}));
+      const posH=Array.from({length:22},()=>({x:PAD.left+rH()*GW,y:PAD.top+rH()*GH}));
+      function nbShow(v,m,a){return!v||v<=0||m<=0?0:Math.max(0,Math.min(a,Math.round(v/m*a)));}
+
+      function drawAnimaux(t) {
+        if(!N)return;
+        const nL=nbShow(hist.loup[N-1],maxLC,14), nC=nbShow(hist.cerf[N-1],maxLC,16), nH=nbShow(hist.herbe[N-1],maxH,20);
+        ctx.save(); ctx.textAlign='center'; ctx.textBaseline='middle';
+        for(let i=0;i<nH;i++){const{x,y}=posH[i%posH.length];ctx.globalAlpha=.05+Math.sin(t*.8+i)*.015;ctx.font=(11+Math.sin(t*.4+i))+'px serif';ctx.fillText('🌿',x,y+Math.sin(t*.7+i)*2);}
+        for(let i=0;i<nC;i++){const{x,y}=posC[i%posC.length];ctx.globalAlpha=.07+Math.sin(t*.6+i*.9)*.02;ctx.font=(12+Math.sin(t*.5+i*1.2))+'px serif';ctx.fillText('🦌',x+Math.sin(t*.5+i)*3,y+Math.sin(t*.6+i)*2);}
+        for(let i=0;i<nL;i++){const{x,y}=posL[i%posL.length];ctx.globalAlpha=.09+Math.sin(t*1.1+i)*.03;ctx.font=(13+Math.sin(t*.6+i*.8))+'px serif';ctx.fillText('🐺',x+Math.sin(t*.4+i)*4,y+Math.sin(t*.5+i)*3);}
+        ctx.restore();
+      }
+
+      function fmt(v){return v>=1000?(v/1000).toFixed(1)+'k':Math.round(v);}
+
+      function drawGrille() {
+        ctx.save();
+        for(let i=0;i<=4;i++){
+          const y=PAD.top+(GH/4)*i;
+          ctx.beginPath();ctx.moveTo(PAD.left,y);ctx.lineTo(PAD.left+GW,y);
+          ctx.strokeStyle='rgba(0,0,0,.07)';ctx.lineWidth=1;ctx.stroke();
+          ctx.font='10px "Lato",sans-serif';ctx.textBaseline='middle';
+          ctx.fillStyle='rgba(100,40,40,.6)';ctx.textAlign='right';
+          ctx.fillText(fmt(maxLC*(1-i/4)),PAD.left-6,y);
+          ctx.fillStyle='rgba(40,80,40,.6)';ctx.textAlign='left';
+          ctx.fillText(fmt(maxH*(1-i/4)),PAD.left+GW+6,y);
+        }
+        ctx.save();
+        ctx.font='bold 9px "Lato",sans-serif';ctx.textBaseline='bottom';
+        ctx.fillStyle='rgba(139,46,46,.75)';ctx.textAlign='right';
+        ctx.fillText('🐺 Loups & cerfs',PAD.left-2,PAD.top-12);
+        ctx.fillStyle='rgba(40,80,40,.75)';ctx.textAlign='left';
+        ctx.fillText("🌿 Herbe",PAD.left+GW+2,PAD.top-12);
+        ctx.restore();
+        ctx.textAlign='center';ctx.textBaseline='top';
+        ctx.fillStyle='rgba(28,28,26,.35)';ctx.font='10px "Lato",sans-serif';
+        const step=Math.max(1,Math.floor(N/7));
+        for(let i=0;i<N;i+=step){ctx.fillText('A'+(i+1),PAD.left+(N>1?i/(N-1):0)*GW,PAD.top+GH+6);}
+        if(N>1)ctx.fillText('A'+N,PAD.left+GW,PAD.top+GH+6);
+        ctx.save();ctx.setLineDash([3,4]);
+        ctx.beginPath();ctx.moveTo(PAD.left+GW,PAD.top);ctx.lineTo(PAD.left+GW,PAD.top+GH);
+        ctx.strokeStyle='rgba(74,124,74,.2)';ctx.lineWidth=1;ctx.stroke();
+        ctx.restore();ctx.restore();
+      }
+
+      function xOf(i,n){return PAD.left+(n>1?i/(n-1):0)*GW;}
+      function yOf(v,m){return PAD.top+GH-Math.min(v/m,1)*GH;}
+
+      function drawCourbe(data,color,lw,maxAx,progress){
+        if(data.length<2)return;
+        const n=Math.max(2,Math.round(data.length*progress)),pts=data.slice(0,n);
+        ctx.save();ctx.beginPath();
+        pts.forEach((v,i)=>{const x=xOf(i,n),y=yOf(v,maxAx);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
+        ctx.lineTo(xOf(n-1,n),PAD.top+GH);ctx.lineTo(PAD.left,PAD.top+GH);ctx.closePath();
+        ctx.globalAlpha=.08;ctx.fillStyle=color;ctx.fill();ctx.restore();
+        ctx.save();ctx.beginPath();
+        pts.forEach((v,i)=>{
+          const x=xOf(i,n),y=yOf(v,maxAx);
+          if(!i){ctx.moveTo(x,y);return;}
+          const px=xOf(i-1,n),py=yOf(pts[i-1],maxAx);
+          ctx.bezierCurveTo((px+x)/2,py,(px+x)/2,y,x,y);
+        });
+        ctx.strokeStyle=color;ctx.lineWidth=lw;ctx.lineJoin='round';ctx.lineCap='round';ctx.globalAlpha=.88;ctx.stroke();ctx.restore();
+        const lx=xOf(n-1,n),ly=yOf(pts[n-1],maxAx),pulse=.3+Math.sin(Date.now()/350)*.25;
+        ctx.save();ctx.globalAlpha=pulse;ctx.beginPath();ctx.arc(lx,ly,8,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();
+        ctx.globalAlpha=1;ctx.beginPath();ctx.arc(lx,ly,3.5,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();ctx.restore();
+      }
+
+      let t0=null; const DUR=900;
+      function render(ts){
+        if(!t0)t0=ts;
+        const ep=1-Math.pow(1-Math.min(1,(ts-t0)/DUR),3),t=ts/1000;
+        ctx.clearRect(0,0,W,H);ctx.fillStyle='#ede8d8';ctx.fillRect(0,0,W,H);
+        drawAnimaux(t);
+        if(N>0){
+          drawGrille();
+          drawCourbe(hist.herbe,'#4a7c4a',2,maxH,ep);
+          drawCourbe(hist.cerf,'#3a5f8a',2.5,maxLC,ep);
+          drawCourbe(hist.loup,'#8b2e2e',3,maxLC,ep);
+        }
+        requestAnimationFrame(render);
       }
       requestAnimationFrame(render);
-    }
-    requestAnimationFrame(render);
-  })();
+    })();
 
-  document.querySelectorAll('.succes-item').forEach(el => {
-    el.addEventListener('click', () => {
-      document.getElementById('modal-emoji').textContent = el.dataset.emoji;
-      document.getElementById('modal-titre').textContent = el.dataset.nom;
-      document.getElementById('modal-desc').textContent  = el.dataset.desc;
-      const obtenu = el.dataset.obtenu === 'true';
-      const statut = document.getElementById('modal-statut');
-      statut.textContent = obtenu ? '✓ Débloqué' : '🔒 Non obtenu';
-      statut.className   = 'modal-statut ' + (obtenu ? 'obtenu' : 'locked');
-      document.getElementById('succes-modal').classList.add('visible');
+    // 6. Événements UI
+    document.querySelectorAll('.succes-item').forEach(el => {
+      el.addEventListener('click', () => {
+        document.getElementById('modal-emoji').textContent = el.dataset.emoji;
+        document.getElementById('modal-titre').textContent = el.dataset.nom;
+        document.getElementById('modal-desc').textContent  = el.dataset.desc;
+        const obtenu = el.dataset.obtenu === 'true';
+        const statut = document.getElementById('modal-statut');
+        statut.textContent = obtenu ? '✓ Débloqué' : '🔒 Non obtenu';
+        statut.className   = 'modal-statut ' + (obtenu ? 'obtenu' : 'locked');
+        document.getElementById('succes-modal').classList.add('visible');
+      });
     });
-  });
-  function fermerSucces() { document.getElementById('succes-modal').classList.remove('visible'); }
-  document.addEventListener('keydown', e => { if(e.key==='Escape'){ fermerSucces(); fermerMeteo(); } });
-  </script>
+    window.fermerSucces = function() {
+      const modal = document.getElementById('succes-modal');
+      if(modal) modal.classList.remove('visible');
+    };
+    
+    // 7. Pré-chargement de l'année suivante
+    prechargerSuivant();
+  }
 
+  // Fonction de pré-chargement
+  async function prechargerSuivant() {
+    if(isPreloading) return;
+    const form = document.getElementById('form-annee-suivante');
+    if(!form) return;
+    
+    isPreloading = true;
+    try {
+      const response = await fetch('/game', {
+        method: 'POST',
+        body: new URLSearchParams(new FormData(form))
+      });
+      nextYearHtml = await response.text();
+    } catch(e) {
+      console.error("Erreur préchargement", e);
+    } finally {
+      isPreloading = false;
+    }
+  }
+
+  // Interception du clic "Année suivante"
+  document.addEventListener('submit', async (e) => {
+    if(e.target.id === 'form-annee-suivante') {
+      e.preventDefault();
+      
+      if(nextYearHtml) {
+        appliquerNouvellePage(nextYearHtml);
+      } else {
+        lancerChargement();
+        // Si pas encore chargé, on attend ou on laisse faire le form normalement
+        const response = await fetch('/game', {
+          method: 'POST',
+          body: new URLSearchParams(new FormData(e.target))
+        });
+        const html = await response.text();
+        appliquerNouvellePage(html);
+      }
+    }
+  });
+
+  function appliquerNouvellePage(html) {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    
+    // Vérifier si c'est une redirection (ex: fin de partie)
+    if(doc.querySelector('title').textContent.includes('Extinction')) {
+      // Si c'est la fin, on laisse le navigateur rediriger proprement
+      const form = document.getElementById('form-annee-suivante');
+      if(form) form.submit();
+      return;
+    }
+
+    const newContent = doc.getElementById('app-container');
+    if(newContent) {
+      document.getElementById('app-container').innerHTML = newContent.innerHTML;
+      document.title = doc.title;
+      // Ré-initialiser le jeu
+      nextYearHtml = null;
+      initGame();
+    } else {
+      // Cas de secours : rechargement normal
+      location.reload();
+    }
+  }
+
+  // Initialisation au premier chargement
+  document.addEventListener('DOMContentLoaded', initGame);
+  document.addEventListener('keydown', e => { if(e.key==='Escape'){ if(window.fermerSucces) fermerSucces(); if(window.fermerMeteo) fermerMeteo(); } });
+  </script>
 </body>
 </html>
