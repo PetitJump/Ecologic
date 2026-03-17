@@ -190,6 +190,10 @@ def index():
 def init():
     return render_template("init.html")
 
+@app.route("/tutoriel")
+def tutoriel():
+    return render_template("tutoriel.html")
+
 @app.route("/complexite")
 def complexite():
     return render_template("complexite.html")
