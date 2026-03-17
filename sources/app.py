@@ -769,7 +769,8 @@ def signup():
             conn.execute('INSERT INTO Compte (username, password) VALUES (?, ?)',
                          (username, hashed_password))
             conn.commit()
-            return redirect(url_for('login'))
+            session['username'] = username
+            return redirect(url_for('index'))
         except sqlite3.IntegrityError:
             erreur = "Ce nom d'utilisateur est déjà pris."
         finally:
