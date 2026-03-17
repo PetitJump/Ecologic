@@ -12,8 +12,6 @@ app.secret_key = "super_secret_key"
 
 DATABASE = os.path.join(os.path.dirname(__file__), 'database.db')
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SUCCES_FILE = os.path.join(BASE_DIR, "data", "succes_permanents.json")
-
 SUCCES_DEF = [
     {"id": "premier_pas",  "emoji": "🌱", "nom": "Premier pas",
      "desc": "Lancer la simulation pour la première fois. Bienvenue dans l'écosystème !"},
@@ -38,14 +36,55 @@ SUCCES_DEF = [
 # ── Succès ────────────────────────────────────────────────────────────────────
 
 def charger_succes_permanents():
-    if os.path.exists(SUCCES_FILE):
-        with open(SUCCES_FILE, "r") as f:
-            return json.load(f)
-    return {s["id"]: False for s in SUCCES_DEF}
+    """Charge les succes : depuis la DB si connecte, depuis la session si invite."""
+    username = session.get('username') if session else None
+    if username:
+        conn = get_db_connection()
+        try:
+            rows = conn.execute(
+                "SELECT succes_id, obtenu FROM Succes WHERE user_id = (SELECT id FROM Compte WHERE username = ?)",
+                (username,)
+            ).fetchall()
+        finally:
+            conn.close()
+        if rows:
+            return {r['succes_id']: bool(r['obtenu']) for r in rows}
+        # Premiere connexion : initialiser la ligne pour chaque succes
+        conn = get_db_connection()
+        try:
+            uid = conn.execute("SELECT id FROM Compte WHERE username = ?", (username,)).fetchone()
+            if uid:
+                for s in SUCCES_DEF:
+                    conn.execute(
+                        "INSERT OR IGNORE INTO Succes (user_id, succes_id, obtenu) VALUES (?,?,0)",
+                        (uid['id'], s['id'])
+                    )
+                conn.commit()
+        finally:
+            conn.close()
+        return {s['id']: False for s in SUCCES_DEF}
+    # Invite ou non connecte : utiliser la session
+    return session.get('succes_session', {s['id']: False for s in SUCCES_DEF})
 
 def sauvegarder_succes_permanents(succes):
-    with open(SUCCES_FILE, "w") as f:
-        json.dump(succes, f, indent=2)
+    """Sauvegarde les succes : dans la DB si connecte, dans la session si invite."""
+    username = session.get('username') if session else None
+    if username:
+        conn = get_db_connection()
+        try:
+            uid = conn.execute("SELECT id FROM Compte WHERE username = ?", (username,)).fetchone()
+            if uid:
+                for succes_id, obtenu in succes.items():
+                    conn.execute(
+                        "INSERT OR REPLACE INTO Succes (user_id, succes_id, obtenu) VALUES (?,?,?)",
+                        (uid['id'], succes_id, 1 if obtenu else 0)
+                    )
+                conn.commit()
+        finally:
+            conn.close()
+    else:
+        session['succes_session'] = succes
+        session.modified = True
 
 # ── Prévisions ────────────────────────────────────────────────────────────────
 
@@ -185,6 +224,17 @@ def init_db():
             max_loups  INTEGER DEFAULT 0,
             max_cerfs  INTEGER DEFAULT 0,
             max_annees INTEGER DEFAULT 0,
+            FOREIGN KEY (user_id) REFERENCES Compte(id)
+        )
+    ''')
+    # Table Succes par utilisateur
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS Succes (
+            id        INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id   INTEGER NOT NULL,
+            succes_id TEXT NOT NULL,
+            obtenu    INTEGER DEFAULT 0,
+            UNIQUE(user_id, succes_id),
             FOREIGN KEY (user_id) REFERENCES Compte(id)
         )
     ''')
@@ -436,7 +486,7 @@ def ajouter():
 @app.route("/reset_succes")
 def reset_succes():
     sauvegarder_succes_permanents({s["id"]: False for s in SUCCES_DEF})
-    return "Succès réinitialisés.", 200
+    return "Succes reinitialises.", 200
 
 @app.route("/parametre")
 def regles():

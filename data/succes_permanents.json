@@ -1,6 +1,6 @@
 {
   "premier_pas": true,
-  "equilibre": false,
+  "equilibre": true,
   "meute_royale": false,
   "troupeau": false,
   "foret_dense": false,
