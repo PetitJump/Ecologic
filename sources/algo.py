@@ -5,7 +5,8 @@ import os
 import random
 import json
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# BASE_DIR : dossier contenant data/ (même dossier que algo.py sur le serveur)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 class Predateur:
     def __init__(self, nom: str, age: int):
@@ -186,14 +187,16 @@ class Jeu:
 
         return evenement
 
-    def update(self, annee: int):
+    def update(self, annee: int, data: dict = None):
         """
         La fonction update permet de mettre à jour le jeu.
+        data : dictionnaire des règles biologiques. Si None, charge depuis data.json (fallback).
         """
         #On appelle le fichier data avec les information sur les animaux.
-        with open(os.path.join(BASE_DIR, 'data', 'data.json'), 'r', encoding='utf-8') as f:
-            data = json.load(f)
-        
+        if data is None:
+            with open(os.path.join(BASE_DIR, 'data', 'data.json'), 'r', encoding='utf-8') as f:
+                data = json.load(f)
+
         #On appelle les fonctions mort et naissance. 
         #Ces fonctions vont donc être appelée pour permettre a l'écosystème de paraitre plus naturel.
         #Pour avoir plus d'information sur ces fonctions, veuillez regarder les fonctions

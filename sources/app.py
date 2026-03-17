@@ -10,8 +10,14 @@ from werkzeug.security import generate_password_hash, check_password_hash
 app = Flask(__name__)
 app.secret_key = "super_secret_key"
 
-DATABASE = os.path.join(os.path.dirname(__file__), 'database.db')
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATABASE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'database.db')
+# BASE_DIR : dossier contenant data/ (même dossier que app.py sur le serveur)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Variables globales de simulation (initialisées pour éviter NameError au démarrage)
+historique = {"loup": [], "cerf": [], "herbe": []}
+jeu = None
+
 SUCCES_DEF = [
     {"id": "premier_pas",  "emoji": "🌱", "nom": "Premier pas",
      "desc": "Lancer la simulation pour la première fois. Bienvenue dans l'écosystème !"},
@@ -201,6 +207,64 @@ def build_render_args(annee, predateur, proie, vegetal, meteo_event,
 
 # ── Base de données ───────────────────────────────────────────────────────────
 
+# Règles biologiques par défaut
+DEFAULT_DATA = {
+    "loup": {
+        "reproduction": {"tout_les": [3, 3], "nombre_de_nv_nee": [1, 2], "maturiter_sexuel": 2},
+        "mange": {"qui": "cerf", "tout_les": 1, "combien": 2}
+    },
+    "cerf": {
+        "reproduction": {"tout_les": [1, 1], "nombre_de_nv_nee": [1, 2], "maturiter_sexuel": 2},
+        "mange": {"qui": "herbe", "tout_les": 1, "combien": 2}
+    },
+    "herbe": {
+        "reproduction": {"taux_r": 0.6, "capacite": 5000, "tout_les": [1, 1], "nombre_de_nv_nee": [1, 1]}
+    }
+}
+
+def charger_regles():
+    """Charge les règles biologiques de l'utilisateur connecté depuis la DB.
+    Retourne les règles par défaut si invité ou aucune règle perso."""
+    username = session.get('username') if session else None
+    if username:
+        conn = get_db_connection()
+        try:
+            row = conn.execute(
+                "SELECT data FROM Regles WHERE user_id = (SELECT id FROM Compte WHERE username = ?)",
+                (username,)
+            ).fetchone()
+        finally:
+            conn.close()
+        if row:
+            data = json.loads(row['data'])
+            # S'assurer que tout_les est bien une liste [min, max]
+            for espece in data:
+                tl = data[espece]["reproduction"]["tout_les"]
+                if isinstance(tl, int):
+                    data[espece]["reproduction"]["tout_les"] = [tl, tl]
+            return data
+    # Invité ou pas de règles perso : règles par défaut
+    import copy
+    return copy.deepcopy(DEFAULT_DATA)
+
+def sauvegarder_regles(data):
+    """Sauvegarde les règles biologiques en DB pour l'utilisateur connecté.
+    Ignoré si invité."""
+    username = session.get('username') if session else None
+    if not username:
+        return
+    conn = get_db_connection()
+    try:
+        uid = conn.execute("SELECT id FROM Compte WHERE username = ?", (username,)).fetchone()
+        if uid:
+            conn.execute(
+                "INSERT OR REPLACE INTO Regles (user_id, data) VALUES (?, ?)",
+                (uid['id'], json.dumps(data, ensure_ascii=False))
+            )
+            conn.commit()
+    finally:
+        conn.close()
+
 def get_db_connection():
     conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
@@ -224,6 +288,15 @@ def init_db():
             max_loups  INTEGER DEFAULT 0,
             max_cerfs  INTEGER DEFAULT 0,
             max_annees INTEGER DEFAULT 0,
+            FOREIGN KEY (user_id) REFERENCES Compte(id)
+        )
+    ''')
+    # Table Regles par utilisateur (JSON stocké comme texte)
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS Regles (
+            id      INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER UNIQUE NOT NULL,
+            data    TEXT NOT NULL,
             FOREIGN KEY (user_id) REFERENCES Compte(id)
         )
     ''')
@@ -372,7 +445,8 @@ def game():
     prev_c = historique["cerf"][-1] if historique["cerf"] else None
     prev_v = historique["herbe"][-1] if historique["herbe"] else None
 
-    _, _, _, meteo_event = jeu.update(annee)
+    data_regles = charger_regles()
+    _, _, _, meteo_event = jeu.update(annee, data_regles)
     annee += 1
     predateur = len(jeu.meute.predateurs)
     proie     = len(jeu.proies)
@@ -409,8 +483,9 @@ def accelerer():
     prev_v = historique["herbe"][-1] if historique["herbe"] else None
 
     dernier_meteo = None
+    data_regles = charger_regles()
     for _ in range(nb_annees):
-        _, _, _, meteo_event = jeu.update(annee)
+        _, _, _, meteo_event = jeu.update(annee, data_regles)
         annee += 1
         predateur = len(jeu.meute.predateurs)
         proie     = len(jeu.proies)
@@ -450,7 +525,8 @@ def update_ajouter():
     prev_c = historique["cerf"][-1] if historique["cerf"] else None
     prev_v = historique["herbe"][-1] if historique["herbe"] else None
 
-    _, _, _, meteo_event = jeu.update(annee)
+    data_regles = charger_regles()
+    _, _, _, meteo_event = jeu.update(annee, data_regles)
     annee += 1
     predateur = len(jeu.meute.predateurs)
     proie     = len(jeu.proies)
@@ -490,12 +566,7 @@ def reset_succes():
 
 @app.route("/parametre")
 def regles():
-    with open(os.path.join(BASE_DIR, "data", "data.json"), "r", encoding="utf-8") as f:
-        data = json.load(f)
-    for espece in data:
-        tl = data[espece]["reproduction"]["tout_les"]
-        if isinstance(tl, int):
-            data[espece]["reproduction"]["tout_les"] = [tl, tl]
+    data = charger_regles()
     return render_template("parametre.html", data=data)
 
 @app.route("/modifier", methods=["GET", "POST"])
@@ -538,8 +609,7 @@ def modifier():
             "reproduction": herbe_repro
         }
     }
-    with open(os.path.join(BASE_DIR, "data", "data.json"), "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)
+    sauvegarder_regles(data)
 
     # Passer toutes les variables nécessaires à index.html
     succes_courants = charger_succes_permanents()
