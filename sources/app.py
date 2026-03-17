@@ -1,13 +1,16 @@
 #Projet : Naturalia
 #Auteurs : Margot, Hugo, Carl, Killian
 
-from flask import Flask, render_template, request, session
+from flask import Flask, render_template, request, session, g, redirect, url_for
 import json, os
+import sqlite3
 from algo import Predateur, Vegetal, Proie, Meute, Jeu
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-app.secret_key = "naturalia_nsi_2025"
+app.secret_key = "super_secret_key"
 
+DATABASE = os.path.join(os.path.dirname(__file__), 'database.db')
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SUCCES_FILE = os.path.join(BASE_DIR, "data", "succes_permanents.json")
 
@@ -152,6 +155,28 @@ def build_render_args(annee, predateur, proie, vegetal, meteo_event,
         historique=json.dumps(historique),
         journal=journal, prevision=prevision
     )
+def get_db_connection():
+    conn = sqlite3.connect(DATABASE)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def init_db():
+    conn = get_db_connection()
+    # On crée la table avec username en UNIQUE pour éviter deux comptes avec le même nom
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS Compte (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            statut TEXT NOT NULL
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+# On exécute l'initialisation au démarrage du script
+init_db()
+
 
 @app.route("/")
 def index():
@@ -366,6 +391,60 @@ def modifier():
     return render_template("index.html",
         succes_list=SUCCES_DEF,
         succes_courants=charger_succes_permanents())
+
+@app.route("/signup", methods=["GET", "POST"])
+def signup():
+    erreur = None
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        statut = request.form['statut']
+
+        # Hachage sécurisé du mot de passe
+        hashed_password = generate_password_hash(password)
+
+        try:
+            conn = get_db_connection()
+            conn.execute('INSERT INTO Compte (username, password, statut) VALUES (?, ?, ?)',
+                         (username, hashed_password, statut))
+            conn.commit()
+            conn.close()
+            # Si succès, on redirige vers la page de connexion
+            return redirect(url_for('login'))
+        except sqlite3.IntegrityError:
+            # S'active car "username" est UNIQUE dans la base de données
+            erreur = "Ce nom d'utilisateur est déjà pris."
+
+    # Correction : on affiche bien signup.html et non index.html
+    return render_template('signup.html', erreur=erreur)
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    erreur = None
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        conn = get_db_connection()
+        user = conn.execute('SELECT * FROM Compte WHERE username = ?', (username,)).fetchone()
+        conn.close()
+
+        # On vérifie que l'utilisateur existe ET que le hash correspond
+        if user and check_password_hash(user['password'], password):
+            # C'est ici que la magie opère : on enregistre l'utilisateur dans la session !
+            session['username'] = user['username']
+            # On le redirige vers l'accueil du jeu
+            return redirect(url_for('index'))
+        else:
+            erreur = "Identifiants ou mot de passe incorrects."
+
+    return render_template('login.html', erreur=erreur)
+
+@app.route('/logout')
+def logout():
+    # On supprime l'utilisateur de la session pour le déconnecter
+    session.pop('username', None)
+    return redirect(url_for('login'))
 
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=5000, debug=True)
