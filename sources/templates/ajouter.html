@@ -36,6 +36,7 @@
   </style>
 </head>
 <body>
+  <canvas id="particules"></canvas>
 
   <div class="cadre"></div>
   <a href="/retour_jeu" class="nav-retour">← Retour</a>
@@ -106,6 +107,7 @@
 
   </div>
 
+  <script src="{{ url_for('static', filename='particules.js') }}"></script>
   <script src="{{ url_for('static', filename='update.js') }}"></script>
   <script>
     ['loup','cerf','herbe'].forEach(id => {

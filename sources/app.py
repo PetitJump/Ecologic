@@ -46,7 +46,7 @@ def set_historique(h):
 SUCCES_DEF = [
     {"id": "premier_pas",  "emoji": "🌱", "nom": "Premier pas",
      "desc": "Lancer la simulation pour la première fois. Bienvenue dans l'écosystème !"},
-    {"id": "equilibre",    "emoji": "⚖️",  "nom": "Équilibre fragile",
+    {"id": "equilibre",    "emoji": "⚖️",  "nom": "Pro de l'équilibre",
      "desc": "Maintenir les trois espèces en vie pendant au moins 40 ans. La nature trouve son équilibre."},
     {"id": "meute_royale", "emoji": "🐺", "nom": "Meute royale",
      "desc": "Atteindre une population de 75 loups. La forêt leur appartient."},
@@ -56,7 +56,7 @@ SUCCES_DEF = [
      "desc": "Atteindre une végétation de 7000 touffes d'herbe. La prairie est luxuriante."},
     {"id": "survie_seche", "emoji": "☀️",  "nom": "Résistance solaire",
      "desc": "Survivre à une sécheresse sans qu'aucune espèce ne disparaisse. La vie persiste malgré la chaleur."},
-    {"id": "survie_hiver", "emoji": "❄️",  "nom": "Hiver de fer",
+    {"id": "survie_hiver", "emoji": "❄️",  "nom": "Véritable hiver",
      "desc": "Survivre à un hiver rigoureux sans qu'aucune espèce ne disparaisse. La forêt résiste au gel."},
     {"id": "cycle",        "emoji": "🔄", "nom": "Le Grand Cycle",
      "desc": "Atteindre l'année 20. Vingt ans de cycles naturels, de prédation et de renouveau."},
@@ -152,27 +152,62 @@ def calculer_prevision(historique, dernier_meteo_cle):
 
 # ── Journal ───────────────────────────────────────────────────────────────────
 
-def maj_journal(journal, annee, predateur, proie, vegetal, meteo_event, nouveaux_succes, prev_pred, prev_proie, prev_veg):
+def maj_journal(journal, annee, predateur, proie, vegetal, meteo_event, nouveaux_succes, prev_pred, prev_proie, prev_veg, historique=None):
     entrees = []
+
+    # Météo
     if meteo_event:
         entrees.append({"annee": annee, "emoji": meteo_event["emoji"], "texte": meteo_event["nom"], "type": "meteo"})
+
+    # Succès débloqués
     for s in nouveaux_succes:
         entrees.append({"annee": annee, "emoji": s["emoji"], "texte": f"Succès débloqué : {s['nom']}", "type": "succes"})
+
+    # Variations — Loups
     if prev_pred and predateur > 0 and prev_pred > 0:
         ratio = predateur / prev_pred
         if ratio >= 1.5:
             entrees.append({"annee": annee, "emoji": "📈", "texte": f"Explosion des loups ({prev_pred} → {predateur})", "type": "pop"})
         elif ratio <= 0.5:
             entrees.append({"annee": annee, "emoji": "📉", "texte": f"Chute des loups ({prev_pred} → {predateur})", "type": "pop"})
+
+    # Variations — Cerfs
     if prev_proie and proie > 0 and prev_proie > 0:
         ratio = proie / prev_proie
         if ratio >= 2.0:
             entrees.append({"annee": annee, "emoji": "📈", "texte": f"Explosion des cerfs ({prev_proie} → {proie})", "type": "pop"})
         elif ratio <= 0.4:
             entrees.append({"annee": annee, "emoji": "📉", "texte": f"Effondrement des cerfs ({prev_proie} → {proie})", "type": "pop"})
+
+    # Variations — Herbe
+    if prev_veg and vegetal > 0 and prev_veg > 0:
+        ratio_v = vegetal / prev_veg
+        if ratio_v >= 2.0:
+            entrees.append({"annee": annee, "emoji": "🌱", "texte": f"Explosion de la végétation ({prev_veg} → {vegetal})", "type": "pop"})
+        elif ratio_v <= 0.35:
+            entrees.append({"annee": annee, "emoji": "🍂", "texte": f"Effondrement de la végétation ({prev_veg} → {vegetal})", "type": "pop"})
+
+    # Ratio loups/cerfs critique — déclenché uniquement quand le seuil est franchi
+    if proie > 0 and predateur > 0 and prev_proie and prev_proie > 0:
+        prev_ratio = (prev_pred or 0) / prev_proie
+        curr_ratio = predateur / proie
+        if curr_ratio > 0.45 and prev_ratio <= 0.45:
+            entrees.append({"annee": annee, "emoji": "⚠️",
+                            "texte": f"Ratio critique : {predateur} loups pour {proie} cerfs — les proies s'épuisent.",
+                            "type": "alerte"})
+
+    # Records de population (après l'année 2 pour éviter le spam initial)
+    if historique and annee > 2:
+        hist_l = historique.get("loup", [])
+        hist_c = historique.get("cerf", [])
+        if len(hist_l) > 1 and predateur > 0 and predateur > max(hist_l[:-1]):
+            entrees.append({"annee": annee, "emoji": "🏆", "texte": f"Record de loups : {predateur} !", "type": "record"})
+        if len(hist_c) > 1 and proie > 0 and proie > max(hist_c[:-1]):
+            entrees.append({"annee": annee, "emoji": "🏆", "texte": f"Record de cerfs : {proie} !", "type": "record"})
+
     for e in entrees:
         journal.insert(0, e)
-    return journal[:12]
+    return journal[:30]
 
 # ── Vérification succès ───────────────────────────────────────────────────────
 
@@ -211,7 +246,7 @@ def build_render_args(annee, predateur, proie, vegetal, meteo_event,
 
     journal = session.get("journal", [])
     journal = maj_journal(journal, annee, predateur, proie, vegetal,
-                          meteo_event, nouveaux_succes, prev_l, prev_c, prev_v)
+                          meteo_event, nouveaux_succes, prev_l, prev_c, prev_v, historique)
     session["journal"] = journal
     session.modified = True
 
@@ -704,7 +739,14 @@ def reset_succes():
 @app.route("/parametre")
 def regles():
     data = charger_regles()
-    return render_template("parametre.html", data=data)
+    taux_r = data.get("herbe", {}).get("reproduction", {}).get("taux_r", 0.25)
+    if taux_r <= 0.15:
+        vitesse_herbe = "lent"
+    elif taux_r >= 0.40:
+        vitesse_herbe = "rapide"
+    else:
+        vitesse_herbe = "normal"
+    return render_template("parametre.html", data=data, vitesse_herbe=vitesse_herbe)
 
 @app.route("/modifier", methods=["GET", "POST"])
 def modifier():

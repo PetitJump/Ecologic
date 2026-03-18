@@ -63,6 +63,7 @@
   </style>
 </head>
 <body>
+  <canvas id="particules"></canvas>
 
   <div class="cadre"></div>
   <a href="/" class="nav-retour">← Accueil</a>
@@ -184,15 +185,15 @@
 
         <div class="herbe-curseur">
           <div class="herbe-option">
-            <input type="radio" id="h-lent" name="vitesse_herbe" value="lent">
+            <input type="radio" id="h-lent" name="vitesse_herbe" value="lent" {% if vitesse_herbe == 'lent' %}checked{% endif %}>
             <label for="h-lent">🐢 Lente</label>
           </div>
           <div class="herbe-option">
-            <input type="radio" id="h-normal" name="vitesse_herbe" value="normal" checked>
+            <input type="radio" id="h-normal" name="vitesse_herbe" value="normal" {% if vitesse_herbe == 'normal' %}checked{% endif %}>
             <label for="h-normal">🌿 Normale</label>
           </div>
           <div class="herbe-option">
-            <input type="radio" id="h-rapide" name="vitesse_herbe" value="rapide">
+            <input type="radio" id="h-rapide" name="vitesse_herbe" value="rapide" {% if vitesse_herbe == 'rapide' %}checked{% endif %}>
             <label for="h-rapide">⚡ Rapide</label>
           </div>
         </div>
@@ -207,6 +208,7 @@
 
   </div>
 
+  <script src="{{ url_for('static', filename='particules.js') }}"></script>
   <script src="{{ url_for('static', filename='regle.js') }}"></script>
   <script>
     // Description dynamique du curseur herbe
@@ -215,6 +217,7 @@
       normal: "+120 touffes/an — équilibre naturel entre les espèces.",
       rapide: "+250 touffes/an — prairie vivace, les cerfs peuvent proliférer sans risque."
     };
+    document.getElementById('herbe-desc').textContent = descs['{{ vitesse_herbe }}'];
     document.querySelectorAll('input[name="vitesse_herbe"]').forEach(r => {
       r.addEventListener('change', () => {
         document.getElementById('herbe-desc').textContent = descs[r.value];

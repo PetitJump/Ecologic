@@ -82,6 +82,7 @@
   </style>
 </head>
 <body>
+  <canvas id="particules"></canvas>
 
   <a href="/" class="fin-rejouer-top">↩ Rejouer</a>
 
@@ -263,6 +264,7 @@
   function fermerFin(){document.getElementById('fin-modal').classList.remove('visible');}
   document.addEventListener('keydown',e=>{if(e.key==='Escape')fermerFin();});
   </script>
+  <script src="{{ url_for('static', filename='particules.js') }}"></script>
 
 </body>
 </html>

@@ -40,6 +40,7 @@
   </style>
 </head>
 <body>
+  <canvas id="particules"></canvas>
 
   <div class="cadre"></div>
   <a href="/" class="nav-retour">← Accueil</a>
@@ -98,6 +99,7 @@
 
   </div>
 
+  <script src="{{ url_for('static', filename='particules.js') }}"></script>
   <script src="{{ url_for('static', filename='app.js') }}"></script>
   <script>
     function majFond(input) {

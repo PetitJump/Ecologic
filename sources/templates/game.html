@@ -94,13 +94,20 @@
     .donut-leg-pct   { font-family:var(--font-corps); font-size:10px; color:var(--terre); opacity:.6; margin-left:3px; }
 
     /* ── Météo overlay ── */
+    #meteo-canvas {
+      position:fixed; inset:0;
+      width:100%; height:100%;
+      pointer-events:none; z-index:10;
+      opacity:0; transition:opacity .4s ease;
+    }
+    .donut-wrap { position:relative; }
     #meteo-overlay {
-      position:fixed; inset:0; z-index:200;
-      display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px;
+      position:absolute; inset:0; z-index:11;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
       opacity:0; pointer-events:none; transition:opacity .4s ease;
+      overflow:visible;
     }
     #meteo-overlay.visible { opacity:1; pointer-events:all; }
-    #meteo-overlay canvas { position:absolute; inset:0; width:100%; height:100%; }
     .meteo-carte {
       position:relative; z-index:2; background:var(--papier); border-left:4px solid var(--foret);
       padding:28px 36px; text-align:center; max-width:380px;
@@ -178,8 +185,15 @@
 
     /* ── Journal ── */
     .journal-wrap { width:100%; max-width:580px; }
-    .journal-liste { margin-top:10px; display:flex; flex-direction:column; }
-    .journal-entree { display:flex; align-items:baseline; gap:10px; padding:8px 12px; border-bottom:1px solid rgba(0,0,0,.05); }
+    .journal-liste {
+      margin-top:10px; display:flex; flex-direction:column;
+      max-height:360px; overflow-y:auto;
+      border:1px solid rgba(0,0,0,.07);
+      scrollbar-width:thin; scrollbar-color:var(--mousse) transparent;
+    }
+    .journal-liste::-webkit-scrollbar { width:4px; }
+    .journal-liste::-webkit-scrollbar-thumb { background:var(--mousse); border-radius:2px; }
+    .journal-entree { display:flex; align-items:baseline; gap:10px; padding:8px 12px; border-bottom:1px solid rgba(0,0,0,.05); flex-shrink:0; }
     .journal-entree:first-child { background:rgba(45,74,45,.04); border-left:2px solid var(--mousse); }
     .journal-entree:last-child  { border-bottom:none; }
     .journal-emoji { font-size:14px; flex-shrink:0; }
@@ -217,6 +231,7 @@
   </style>
 </head>
 <body>
+  <canvas id="particules"></canvas>
   <div id="app-container">
     {% if prevision %}
     <div class="prevision-bandeau {{ prevision.niveau }}">
@@ -228,18 +243,6 @@
     <div class="chargement" id="chargement"></div>
     <div class="cadre"></div>
     <a href="/" class="nav-retour">← Accueil</a>
-
-    {% if meteo %}
-    <div id="meteo-overlay">
-      <canvas id="meteo-canvas"></canvas>
-      <div class="meteo-carte">
-        <span class="meteo-emoji">{{ meteo.emoji }}</span>
-        <h2 class="meteo-nom">{{ meteo.nom }}</h2>
-        <p class="meteo-desc">{{ meteo.description }}</p>
-        <button class="meteo-continuer" onclick="fermerMeteo()">Continuer →</button>
-      </div>
-    </div>
-    {% endif %}
 
     <div id="succes-toasts">
       {% for s in nouveaux_succes %}
@@ -314,7 +317,19 @@
 
       </div>
 
+      {% if meteo %}<canvas id="meteo-canvas"></canvas>{% endif %}
+
       <div class="donut-wrap a3">
+        {% if meteo %}
+        <div id="meteo-overlay">
+          <div class="meteo-carte">
+            <span class="meteo-emoji">{{ meteo.emoji }}</span>
+            <h2 class="meteo-nom">{{ meteo.nom }}</h2>
+            <p class="meteo-desc">{{ meteo.description }}</p>
+            <button class="meteo-continuer" onclick="fermerMeteo()">Continuer →</button>
+          </div>
+        </div>
+        {% endif %}
         <canvas id="donut-canvas" width="110" height="110"></canvas>
         <div class="donut-legende">
           <div class="donut-leg">
@@ -407,16 +422,6 @@
         </div>
       </div>
 
-      <div id="succes-modal" onclick="if(event.target===this)fermerSucces()">
-        <div class="modal-carte">
-          <button class="modal-close" onclick="fermerSucces()">✕</button>
-          <span class="modal-emoji" id="modal-emoji"></span>
-          <span class="modal-statut" id="modal-statut"></span>
-          <h3 class="modal-titre" id="modal-titre"></h3>
-          <p  class="modal-desc"  id="modal-desc"></p>
-        </div>
-      </div>
-
     </div>
 
     <!-- Données critiques pour JS -->
@@ -475,7 +480,10 @@
       const mcanvas   = document.getElementById('meteo-canvas');
       if(mcanvas) {
         const mctx      = mcanvas.getContext('2d');
-        function resizeMeteo() { mcanvas.width=innerWidth; mcanvas.height=innerHeight; }
+        function resizeMeteo() {
+          mcanvas.width  = window.innerWidth;
+          mcanvas.height = window.innerHeight;
+        }
         resizeMeteo(); window.addEventListener('resize', resizeMeteo);
         const particles = [];
         function initParticules() {
@@ -503,11 +511,12 @@
           });
           animFrame = requestAnimationFrame(animerMeteo);
         }
-        setTimeout(()=>{ if(overlay) overlay.classList.add('visible'); animerMeteo(); }, 300);
+        setTimeout(()=>{ if(overlay) overlay.classList.add('visible'); mcanvas.style.opacity='1'; animerMeteo(); }, 300);
         window.fermerMeteo = function() {
           if(overlay) {
             overlay.style.opacity='0';
-            setTimeout(()=>{ overlay.style.display='none'; cancelAnimationFrame(animFrame); }, 400);
+            mcanvas.style.opacity='0';
+            setTimeout(()=>{ overlay.style.display='none'; mcanvas.style.display='none'; cancelAnimationFrame(animFrame); }, 400);
           }
         };
       }
@@ -750,5 +759,18 @@
   document.addEventListener('DOMContentLoaded', initGame);
   document.addEventListener('keydown', e => { if(e.key==='Escape'){ if(window.fermerSucces) fermerSucces(); if(window.fermerMeteo) fermerMeteo(); } });
   </script>
+
+  <script src="{{ url_for('static', filename='particules.js') }}"></script>
+
+  <!-- Modal succès hors de #app-container pour que position:fixed fonctionne correctement -->
+  <div id="succes-modal" onclick="if(event.target===this)fermerSucces()">
+    <div class="modal-carte">
+      <button class="modal-close" onclick="fermerSucces()">✕</button>
+      <span class="modal-emoji" id="modal-emoji"></span>
+      <span class="modal-statut" id="modal-statut"></span>
+      <h3 class="modal-titre" id="modal-titre"></h3>
+      <p  class="modal-desc"  id="modal-desc"></p>
+    </div>
+  </div>
 </body>
 </html>
