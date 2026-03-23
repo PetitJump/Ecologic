@@ -167,7 +167,7 @@
     .succes-item:not(.obtenu)::after { content:'🔒'; position:absolute; top:5px; right:6px; font-size:10px; opacity:.5; }
 
     /* ── Modal succès ── */
-    #succes-modal { position:fixed; inset:0; z-index:400; background:rgba(28,28,26,.6); backdrop-filter:blur(3px); display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity .25s; }
+    #succes-modal { position:fixed; inset:0; z-index:900; background:rgba(28,28,26,.6); backdrop-filter:blur(3px); display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity .25s; }
     #succes-modal.visible { opacity:1; pointer-events:all; }
     .modal-carte { background:var(--papier); border-left:4px solid var(--foret); padding:36px 40px; max-width:420px; width:90%; box-shadow:8px 8px 0 rgba(0,0,0,.15); position:relative; animation:entrerModal .3s cubic-bezier(.22,1,.36,1) both; }
     @keyframes entrerModal { from{transform:translateY(20px) scale(.97)} to{transform:none} }
@@ -443,49 +443,32 @@
 
     </div>
 
-    <!-- Journal modal -->
-    <div id="journal-modal" onclick="if(event.target===this)fermerJournal()">
-      <div class="journal-modal-carte">
-        <button class="panel-modal-close" onclick="fermerJournal()">✕</button>
-        <p class="titre-section" style="margin:0 0 12px">Journal de bord</p>
-        <div class="journal-liste">
-          {% if journal %}
-            {% for e in journal %}
-            <div class="journal-entree">
-              <span class="journal-emoji">{{ e.emoji }}</span>
-              <span class="journal-annee">A{{ e.annee }}</span>
-              <span class="journal-texte">{{ e.texte }}</span>
-            </div>
-            {% endfor %}
-          {% else %}
-            <p class="journal-vide">Aucun événement notable pour l'instant…</p>
-          {% endif %}
+    <!-- Sources cachées — rafraîchies à chaque swap AJAX -->
+    <div id="journal-source" style="display:none">
+      {% if journal %}
+        {% for e in journal %}
+        <div class="journal-entree">
+          <span class="journal-emoji">{{ e.emoji }}</span>
+          <span class="journal-annee">A{{ e.annee }}</span>
+          <span class="journal-texte">{{ e.texte }}</span>
         </div>
-      </div>
+        {% endfor %}
+      {% else %}
+        <p class="journal-vide">Aucun événement notable pour l'instant…</p>
+      {% endif %}
     </div>
-
-    <!-- Succès list modal -->
-    <div id="succes-list-modal" onclick="if(event.target===this)fermerSuccesList()">
-      <div class="succes-list-modal-carte">
-        <button class="panel-modal-close" onclick="fermerSuccesList()">✕</button>
-        <p class="titre-section" style="margin:0 0 14px">Succès
-          <span style="font-family:var(--font-corps);font-size:11px;font-weight:400;opacity:.5;margin-left:8px;">
-            {% set nb_obtenus = succes_courants.values()|list|select|list|length %}
-            {{ nb_obtenus }} / {{ succes_list|length }}
-          </span>
-        </p>
-        <div class="succes-grille">
-          {% for s in succes_list %}
-          <div class="succes-item {% if succes_courants[s.id] %}obtenu{% endif %}"
-               onclick="ouvrirSucces(this)"
-               data-emoji="{{s.emoji}}" data-nom="{{s.nom|e}}"
-               data-desc="{{s.desc|e}}" data-obtenu="{{succes_courants[s.id]|lower}}">
-            <span class="succes-item-emoji">{{s.emoji}}</span>
-            <span class="succes-item-nom">{{s.nom}}</span>
-          </div>
-          {% endfor %}
-        </div>
+    <div id="succes-source" style="display:none">
+      {% set nb_obtenus = succes_courants.values()|list|select|list|length %}
+      <span id="succes-source-count">{{ nb_obtenus }}/{{ succes_list|length }}</span>
+      {% for s in succes_list %}
+      <div class="succes-item {% if succes_courants[s.id] %}obtenu{% endif %}"
+           onclick="ouvrirSucces(this)"
+           data-emoji="{{s.emoji}}" data-nom="{{s.nom|e}}"
+           data-desc="{{s.desc|e}}" data-obtenu="{{succes_courants[s.id]|lower}}">
+        <span class="succes-item-emoji">{{s.emoji}}</span>
+        <span class="succes-item-nom">{{s.nom}}</span>
       </div>
+      {% endfor %}
     </div>
 
     <!-- Données critiques pour JS -->
@@ -536,6 +519,22 @@
     const dataEl = document.getElementById('game-data');
     if(!dataEl) return;
     const GDATA = JSON.parse(dataEl.textContent);
+
+    // 0. Rafraîchir les modaux journal/succès depuis les sources cachées
+    const jSrc = document.getElementById('journal-source');
+    const jTarget = document.getElementById('journal-modal-liste');
+    if(jSrc && jTarget) jTarget.innerHTML = jSrc.innerHTML;
+
+    const sSrc = document.getElementById('succes-source');
+    const sGrille = document.getElementById('succes-modal-grille');
+    const sCount = document.getElementById('succes-modal-count');
+    if(sSrc && sGrille) {
+      const countEl = sSrc.querySelector('#succes-source-count');
+      if(sCount && countEl) sCount.textContent = countEl.textContent;
+      // Copier tous les items sans l'élément count
+      sGrille.innerHTML = '';
+      sSrc.querySelectorAll('.succes-item').forEach(el => sGrille.appendChild(el.cloneNode(true)));
+    }
 
     // 1. Animations des cartes
     ['loup','cerf','herbe'].forEach((id,i) => {
@@ -838,7 +837,27 @@
 
   <script src="{{ url_for('static', filename='particules.js') }}"></script>
 
-  <!-- Modal succès hors de #app-container pour que position:fixed fonctionne correctement -->
+  <!-- Journal modal — hors #app-container -->
+  <div id="journal-modal" onclick="if(event.target===this)fermerJournal()">
+    <div class="journal-modal-carte">
+      <button class="panel-modal-close" onclick="fermerJournal()">✕</button>
+      <p class="titre-section" style="margin:0 0 12px">Journal de bord</p>
+      <div class="journal-liste" id="journal-modal-liste"></div>
+    </div>
+  </div>
+
+  <!-- Succès liste modal — hors #app-container -->
+  <div id="succes-list-modal" onclick="if(event.target===this)fermerSuccesList()">
+    <div class="succes-list-modal-carte">
+      <button class="panel-modal-close" onclick="fermerSuccesList()">✕</button>
+      <p class="titre-section" style="margin:0 0 14px">Succès
+        <span id="succes-modal-count" style="font-family:var(--font-corps);font-size:11px;font-weight:400;opacity:.5;margin-left:8px;"></span>
+      </p>
+      <div class="succes-grille" id="succes-modal-grille"></div>
+    </div>
+  </div>
+
+  <!-- Modal succès détail — hors #app-container -->
   <div id="succes-modal" onclick="if(event.target===this)fermerSucces()">
     <div class="modal-carte">
       <button class="modal-close" onclick="fermerSucces()">✕</button>
