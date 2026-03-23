@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <style>
     body { background:var(--creme); overflow-y:auto; }
-    .page { justify-content:flex-start; padding-top:80px; padding-bottom:80px; min-height:100vh; gap:16px; }
+    .page { justify-content:flex-start; padding-top:56px; padding-bottom:80px; min-height:100vh; gap:16px; }
 
     @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
     body { animation:fadeIn .2s steps(4) both; }
@@ -28,6 +28,7 @@
     .meute-wrapper { display:flex; flex-direction:column; }
     .meute-flottante { display:inline-block; font-family:var(--font-corps); font-size:6px; text-transform:uppercase; color:var(--creme); background:var(--foret); padding:4px 8px; margin-bottom:0; width:fit-content; border:2px solid var(--encre); border-bottom:none; z-index:2; }
     .stat-espece { font-family:var(--font-corps); font-size:7px; text-transform:uppercase; color:var(--terre); }
+    .stat-delta { font-family:var(--font-data); font-size:7px; float:right; margin-top:2px; }
     .stat-nombre { font-family:var(--font-data); font-size:20px; color:var(--encre); line-height:1.2; }
     .stat-barre-wrap { height:6px; background:#b8c8a8; border:1px solid var(--encre); overflow:hidden; margin-top:4px; }
     .stat-barre { height:100%; }
@@ -106,8 +107,17 @@
     .modal-titre { font-family:var(--font-titre); font-size:9px; color:var(--foret); margin-bottom:10px; line-height:1.8; }
     .modal-desc  { font-family:var(--font-corps); font-size:7px; color:var(--terre); line-height:2.2; }
 
+    /* ── Topbar ── */
+    .game-topbar { position:fixed; top:0; left:0; right:0; z-index:100; display:flex; align-items:center; justify-content:space-between; padding:6px 12px; background:var(--foret); border-bottom:2px solid var(--encre); box-shadow:0 4px 0 var(--encre); box-sizing:border-box; }
+    .game-topbar .nav-retour { position:static; top:auto; left:auto; background:transparent; border:2px solid rgba(232,244,212,.35); box-shadow:none; color:var(--creme); padding:4px 10px; }
+    .game-topbar .nav-retour:hover { background:rgba(232,244,212,.12); }
+    .game-topbar .badge-annee { background:transparent; border:none; box-shadow:none; padding:0; color:var(--creme); gap:8px; }
+    .game-topbar .badge-annee .libelle { opacity:.7; }
+    .game-topbar .badge-annee .numero { font-size:14px; }
+    .game-topbar .badge-saut { border-color:rgba(232,244,212,.4); background:rgba(46,122,20,.5); color:var(--creme); }
+
     /* ── Prévision ── */
-    .prevision-bandeau { position:sticky; top:0; z-index:50; width:100%; display:flex; align-items:center; justify-content:center; gap:10px; padding:8px 16px; font-family:var(--font-corps); font-size:7px; text-transform:uppercase; border-bottom:var(--px-border); }
+    .prevision-bandeau { position:sticky; top:44px; z-index:50; width:100%; display:flex; align-items:center; justify-content:center; gap:10px; padding:8px 16px; font-family:var(--font-corps); font-size:7px; text-transform:uppercase; border-bottom:var(--px-border); }
     .prevision-bandeau.danger  { background:var(--sang); color:var(--creme); }
     .prevision-bandeau.warning { background:var(--terre); color:var(--creme); }
     .prevision-bandeau.info    { background:var(--foret); color:var(--creme); }
@@ -165,7 +175,17 @@
 
     <div class="chargement" id="chargement"></div>
     <div class="cadre"></div>
-    <a href="/" class="nav-retour">← Accueil</a>
+
+    <div class="game-topbar">
+      <a href="/" class="nav-retour">← Accueil</a>
+      <div class="badge-annee">
+        <span class="libelle">Année</span>
+        <span class="numero">{{annee}}</span>
+        {% if annees_sautees is defined and annees_sautees %}
+        <span class="badge-saut">+{{annees_sautees}} ans simulés</span>
+        {% endif %}
+      </div>
+    </div>
 
     <div id="succes-toasts">
       {% for s in nouveaux_succes %}
@@ -180,14 +200,6 @@
     </div>
 
     <div class="page">
-
-      <div class="badge-annee a1" style="display:inline-flex;align-items:baseline;gap:0">
-        <span class="libelle">Année</span>
-        <span class="numero">{{annee}}</span>
-        {% if annees_sautees is defined and annees_sautees %}
-        <span class="badge-saut">+{{annees_sautees}} ans simulés</span>
-        {% endif %}
-      </div>
 
       <div class="grille-stats a2">
 
