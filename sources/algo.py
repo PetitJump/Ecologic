@@ -5,7 +5,8 @@ import os
 import random
 import json
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+#BASE_DIR = os.path.dirname(os.path.abspath(__file__)) Pour le serveur
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) #Pour local
 
 class Predateur:
     def __init__(self, nom: str, age: int):
